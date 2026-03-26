@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AutoFiller Help Guide</title>
+  <link rel="stylesheet" href="help.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="help-container">
+    <header>
+      <h1>AutoFiller Documentation</h1>
+      <p>Everything you need to know to harness the power of AutoFiller.</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>1. Getting Started</h2>
+        <p>AutoFiller is designed to expedite local development and form testing by saving you from monotonous typing.</p>
+        <ul>
+          <li><strong>Step 1:</strong> Add an Application group to keep your configurations organized.</li>
+          <li><strong>Step 2:</strong> Add a Target URL Rule. This dictates on which websites the autofill will be active.</li>
+          <li><strong>Step 3:</strong> Add Field Mappings by providing the exact CSS Selector of the inputs on the page, and the content you'd like inserted.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>2. URL Match Types</h2>
+        <p>When creating a rule, you must select how the extension identifies the current web page.</p>
+        <div class="code-block">
+          <p><strong>Exact Match:</strong> Matches the exact string character by character. If the URL has query parameters like <code>?id=123</code>, it will fail unless mapped explicitly.</p>
+          <p><strong>Starts With:</strong> Excellent for matching a domain structure (e.g. <code>http://localhost:3000/</code>).</p>
+          <p><strong>Wildcard (*):</strong> The most powerful option. Replaces any variable data with a star. Use this for dynamic ports and dynamic routing paths. Example: <code>http://localhost:*/api/v1/*/edit</code>.</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>3. CSS Selectors (How to target fields)</h2>
+        <p>A CSS Selector is the exact address of an HTML element on the page. You can easily find the CSS selector by right-clicking any input box in Chrome, selecting "Inspect Element", and looking at its attributes.</p>
+        
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Format</th>
+              <th>Example HTML</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>By ID (Best)</td>
+              <td><code>#element-id</code></td>
+              <td><code>&lt;input id="username"&gt;</code> &rarr; <code>#username</code></td>
+            </tr>
+            <tr>
+              <td>By Class Name</td>
+              <td><code>.class-name</code></td>
+              <td><code>&lt;input class="email-field"&gt;</code> &rarr; <code>.email-field</code></td>
+            </tr>
+            <tr>
+              <td>By Name Attribute</td>
+              <td><code>input[name="value"]</code></td>
+              <td><code>&lt;input name="first_name"&gt;</code> &rarr; <code>input[name="first_name"]</code></td>
+            </tr>
+            <tr>
+              <td>By Type Attribute</td>
+              <td><code>input[type="email"]</code></td>
+              <td><code>&lt;input type="email"&gt;</code> &rarr; <code>input[type="email"]</code></td>
+            </tr>
+            <tr>
+              <td>Nested Selector</td>
+              <td><code>.parent .child</code></td>
+              <td><code>&lt;div class="form"&gt;&lt;input id="pass"&gt;&lt;/div&gt;</code> &rarr; <code>.form #pass</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>4. Keyboard Shortcuts</h2>
+        <div class="shortcuts">
+          <div class="shortcut-pill"><code>Ctrl</code> + <code>Space</code> &rarr; Execute AutoFill</div>
+          <div class="shortcut-pill"><code>Ctrl</code> + <code>Shift</code> + <code>Space</code> &rarr; Execute Auto Clear</div>
+        </div>
+      </section>
+    </main>
+    
+    <footer>
+      <a href="options.html" class="back-link">&larr; Back to Settings</a>
+    </footer>
+  </div>
+</body>
+</html>

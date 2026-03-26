@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "AutoFiller",
+  "version": "1.0.0",
+  "description": "Developer tool to auto-fill input fields across local and production applications.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "AutoFiller Menu"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "autofill-now": {
+      "suggested_key": {
+        "default": "Ctrl+Space",
+        "mac": "Command+Space"
+      },
+      "description": "Trigger AutoFill on the current page."
+    },
+    "autoclear-now": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Space",
+        "mac": "Command+Shift+Space"
+      },
+      "description": "Clear AutoFilled fields on the current page."
+    }
+  }
+}

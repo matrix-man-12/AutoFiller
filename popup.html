@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AutoFiller Command Interface</title>
+  <link rel="stylesheet" href="popup.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h2>AutoFiller</h2>
+    <p class="subtitle">Quick Actions</p>
+    
+    <button id="btn-autofill" class="action-btn">
+      <span class="icon">⚡</span> AutoFill Now
+    </button>
+    
+    <button id="btn-autoclear" class="action-btn autoclear">
+      <span class="icon">🧹</span> Auto Clear
+    </button>
+    
+    <hr>
+    
+    <div style="display:flex; gap: 8px;">
+      <button id="btn-options" class="secondary-btn" style="flex:1;">
+        ⚙️ Settings
+      </button>
+      <a href="help.html" target="_blank" class="help-btn" style="display:flex; align-items:center; justify-content:center; padding: 10px; border-radius: 8px; background: #e5e7eb; color: #374151; text-decoration: none;" title="Help & Docs">
+        ❓
+      </a>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
