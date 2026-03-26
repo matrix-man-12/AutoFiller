@@ -30,8 +30,8 @@ if (typeof window.hasAutoFillerListener === 'undefined') {
             if (!field.enabled) return;
 
             try {
-              const element = document.querySelector(field.selector);
-              if (element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA')) {
+              const element = getElement(field.selector);
+              if (canFill(element)) {
                 let contentToFill = field.content;
                 
                 if (field.appendTimestamp) {
@@ -46,11 +46,7 @@ if (typeof window.hasAutoFillerListener === 'undefined') {
                   contentToFill += (contentToFill.length > 0 ? ' ' : '') + timestampStr;
                 }
                 
-                element.value = contentToFill;
-                
-                // Emulate genuine user inputs for frameworks like React, Vue, Angular
-                element.dispatchEvent(new Event('input', { bubbles: true }));
-                element.dispatchEvent(new Event('change', { bubbles: true }));
+                fillElement(element, contentToFill);
               }
             } catch (err) {
               console.warn(`AutoFiller: Invalid selector or element not found -> ${field.selector}`, err);
@@ -78,11 +74,9 @@ if (typeof window.hasAutoFillerListener === 'undefined') {
             if (!field.enabled) return;
 
             try {
-              const element = document.querySelector(field.selector);
-              if (element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA')) {
-                element.value = '';
-                element.dispatchEvent(new Event('input', { bubbles: true }));
-                element.dispatchEvent(new Event('change', { bubbles: true }));
+              const element = getElement(field.selector);
+              if (canFill(element)) {
+                clearElement(element);
               }
             } catch (err) {
               console.warn(`AutoFiller: Invalid selector or element not found -> ${field.selector}`, err);
@@ -91,6 +85,57 @@ if (typeof window.hasAutoFillerListener === 'undefined') {
         }
       });
     });
+  }
+
+  // --- Helper Methods ---
+
+  function getElement(selector) {
+    const s = selector.trim();
+    if (s.startsWith('//') || s.startsWith('(/')) {
+      // Handle XPath logic directly
+      try {
+        const result = document.evaluate(s, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+        return result.singleNodeValue;
+      } catch (e) {
+        console.warn('AutoFiller: Invalid XPath expression', e);
+        return null;
+      }
+    }
+    // Handle CSS Selector. browser querySelector natively supports highly complex Level 4 CSS Selectors
+    return document.querySelector(s);
+  }
+
+  function canFill(element) {
+    if (!element) return false;
+    // Expanded limits to safely include generic text environments 
+    const isFormEl = ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName);
+    const isContentEditable = element.isContentEditable;
+    return isFormEl || isContentEditable;
+  }
+
+  function fillElement(element, content) {
+    if (element.tagName === 'SELECT') {
+      element.value = content;
+    } else if (element.isContentEditable) {
+      element.innerText = content;
+    } else {
+      element.value = content;
+    }
+    // Emulate genuine user inputs for frameworks like React, Vue, Angular
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function clearElement(element) {
+    if (element.tagName === 'SELECT') {
+      element.value = '';
+    } else if (element.isContentEditable) {
+      element.innerText = '';
+    } else {
+      element.value = '';
+    }
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   /**
