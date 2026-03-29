@@ -1285,41 +1285,53 @@ export default function Options() {
                     currentRule.fields.map((field) => (
                       <div 
                         key={field.id} 
-                        className="group relative flex flex-col md:flex-row items-center gap-4 p-5 border rounded-xl shadow-sm"
+                        className={`group relative flex flex-col md:flex-row items-end gap-3 p-4 pt-5 mt-4 border rounded-xl shadow-sm transition-all duration-200 ${!field.enabled ? 'opacity-50 grayscale-[30%] bg-black/[0.02] dark:bg-white/[0.02]' : ''}`}
                         style={{ 
-                          backgroundColor: 'var(--color-surface-card)',
+                          backgroundColor: field.enabled ? 'var(--color-surface-card)' : 'transparent',
                           borderColor: 'var(--color-border)'
                         }}
                       >
-                        {/* Field ID Badge */}
-                        <div 
-                          className="absolute -top-2.5 left-4 px-2 py-0.5 rounded text-[10px] font-bold border hidden md:block font-mono-code"
-                          style={{ 
-                            backgroundColor: 'var(--color-surface-raised)',
-                            borderColor: 'var(--color-border)',
-                            color: 'var(--color-text-tertiary)'
-                          }}
-                        >
-                          ID: {field.id}
+                        {/* Top Left: Toggle & Field ID Badge */}
+                        <div className="absolute -top-3 left-4 flex items-center gap-2">
+                          <label className="relative inline-flex items-center cursor-pointer" title={field.enabled ? "Disable Field" : "Enable Field"}>
+                            <input type="checkbox" className="sr-only peer" checked={field.enabled} onChange={(e) => updateMappingField(currentRule.id, field.id, 'enabled', e.target.checked)}/>
+                            <div className="w-[36px] h-[20px] bg-warm-300 dark:bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[16px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-[16px] after:w-[16px] after:transition-all peer-checked:bg-primary-500 shadow-sm border border-black/10 dark:border-white/10"></div>
+                          </label>
+
+                          <div 
+                            className="px-2 py-0.5 rounded text-[10px] font-bold border hidden md:block font-mono-code"
+                            style={{ 
+                              backgroundColor: 'var(--color-surface-raised)',
+                              borderColor: 'var(--color-border)',
+                              color: 'var(--color-text-tertiary)'
+                            }}
+                          >
+                            ID: {field.id}
+                          </div>
                         </div>
 
-                        {/* Enable toggle */}
-                        <div className="flex items-center justify-center shrink-0 w-max pt-5">
-                          <label className="relative inline-flex items-center cursor-pointer" title="Enable Field">
-                            <input type="checkbox" className="sr-only peer" checked={field.enabled} onChange={(e) => updateMappingField(currentRule.id, field.id, 'enabled', e.target.checked)}/>
-                            <div className="w-[48px] h-[28px] bg-warm-300 dark:bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[20px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-[24px] after:w-[24px] after:transition-all peer-checked:bg-primary-500 shadow-inner"></div>
-                          </label>
+                        {/* Top Right: Delete Button */}
+                        <div className="absolute -top-3 right-4 flex items-center gap-2">
+                          <button 
+                            onClick={() => deleteMapping(currentRule.id, field.id)} 
+                            className="p-1 rounded-full text-danger-400 hover:bg-danger-500 hover:border-danger-500 transition-colors shadow-sm border cursor-pointer"
+                            style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}
+                            title="Remove Field"
+                          >
+                            <Trash2 size={13} strokeWidth={2.5}/>
+                          </button>
                         </div>
 
                         {/* Selector */}
-                        <div className="flex-1 w-full">
-                          <label className="block text-[11px] uppercase tracking-wider font-bold mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>Selector</label>
+                        <div className="flex-1 w-full relative">
+                          <label className={`block text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>Selector</label>
                           <input 
                             type="text" 
                             value={field.selector} 
+                            disabled={!field.enabled}
                             onChange={(e) => updateMappingField(currentRule.id, field.id, 'selector', e.target.value)} 
                             placeholder="#username or //div/input" 
-                            className="w-full px-3.5 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none font-semibold text-sm font-mono-code"
+                            className={`w-full px-3 py-2 border rounded-lg font-semibold text-sm font-mono-code shadow-inner transition-colors ${field.enabled ? 'focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none' : 'cursor-not-allowed'}`}
                             style={{ 
                               backgroundColor: 'var(--color-surface-raised)',
                               borderColor: 'var(--color-border)',
@@ -1329,14 +1341,15 @@ export default function Options() {
                         </div>
 
                         {/* Fill Value */}
-                        <div className="flex-1 w-full">
-                          <label className="block text-[11px] uppercase tracking-wider font-bold mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>Fill Value</label>
+                        <div className="flex-1 w-full relative">
+                          <label className={`block text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>Fill Value</label>
                           <input 
                             type="text" 
                             value={field.content} 
+                            disabled={!field.enabled}
                             onChange={(e) => updateMappingField(currentRule.id, field.id, 'content', e.target.value)} 
                             placeholder="Value to fill..." 
-                            className="w-full px-3.5 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none font-semibold text-sm font-mono-code"
+                            className={`w-full px-3 py-2 border rounded-lg font-semibold text-sm font-mono-code shadow-inner transition-colors ${field.enabled ? 'focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none' : 'cursor-not-allowed'}`}
                             style={{ 
                               backgroundColor: 'var(--color-surface-raised)',
                               borderColor: 'var(--color-border)',
@@ -1346,9 +1359,9 @@ export default function Options() {
                         </div>
 
                         {/* Timestamp checkbox */}
-                        <div className="flex items-center justify-center shrink-0 w-max pt-5">
+                        <div className={`flex items-center justify-center shrink-0 w-max h-[38px] ${!field.enabled ? 'pointer-events-none' : ''}`}>
                           <label 
-                            className="flex items-center justify-center gap-2 cursor-pointer px-3 py-2.5 rounded-lg border shadow-sm"
+                            className={`flex items-center justify-center gap-1.5 px-3 h-full rounded-lg border shadow-sm transition-colors ${field.enabled ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5' : ''}`}
                             style={{ 
                               backgroundColor: 'var(--color-surface-raised)',
                               borderColor: 'var(--color-border)'
@@ -1356,26 +1369,14 @@ export default function Options() {
                           >
                             <input 
                               type="checkbox" 
+                              disabled={!field.enabled}
                               checked={field.appendTimestamp} 
                               onChange={(e) => updateMappingField(currentRule.id, field.id, 'appendTimestamp', e.target.checked)} 
-                              className="w-[18px] h-[18px] cursor-pointer rounded accent-primary-500"
+                              className={`w-3.5 h-3.5 rounded accent-primary-500 ${field.enabled ? 'cursor-pointer' : ''}`}
                             />
-                            <span className="text-[13px] font-bold" style={{ color: 'var(--color-text-primary)' }}>Timestamp</span>
+                            <span className="text-[12px] font-bold" style={{ color: 'var(--color-text-primary)' }}>Timestamp</span>
                           </label>
                         </div>
-
-                        {/* Delete field */}
-                        <div className="pt-5">
-                          <button 
-                            onClick={() => deleteMapping(currentRule.id, field.id)} 
-                            className="p-2.5 border text-danger-400 hover:bg-danger-50 hover:border-danger-200 hover:text-danger-600 rounded-lg cursor-pointer shadow-sm"
-                            style={{ borderColor: 'var(--color-border)' }}
-                            title="Remove Field"
-                          >
-                            <Trash2 size={20} />
-                          </button>
-                        </div>
-
                       </div>
                     ))
                   )}
