@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   ArrowLeft,
   Moon,
   Sun,
@@ -9,14 +9,15 @@ import {
   MousePointer2,
   Keyboard,
   Zap,
-  BookOpen
+  BookOpen,
+  Trash2
 } from 'lucide-react';
 
 // ─── SVG Background ─────────────────────────────────────────────────────────
 function SvgBackground() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const strokeColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(180,160,130,0.08)';
-  
+
   return (
     <svg
       className="fixed inset-0 w-full h-full pointer-events-none"
@@ -25,20 +26,20 @@ function SvgBackground() {
       preserveAspectRatio="none"
       viewBox="0 0 1440 900"
     >
-      <path d="M0 340 Q360 280 720 350 Q1080 420 1440 320" fill="none" stroke={strokeColor} strokeWidth="1.5"/>
-      <path d="M0 380 Q400 320 800 390 Q1100 440 1440 360" fill="none" stroke={strokeColor} strokeWidth="1.2"/>
-      <path d="M0 420 Q300 370 650 430 Q1000 480 1440 400" fill="none" stroke={strokeColor} strokeWidth="1"/>
-      <path d="M0 480 Q350 430 700 490 Q1050 540 1440 450" fill="none" stroke={strokeColor} strokeWidth="0.8"/>
-      <path d="M0 540 Q380 500 750 540 Q1100 580 1440 510" fill="none" stroke={strokeColor} strokeWidth="0.6"/>
-      <path d="M0 600 Q320 560 680 610 Q1020 650 1440 570" fill="none" stroke={strokeColor} strokeWidth="0.5"/>
-      <path d="M0 660 Q400 640 780 660 Q1100 700 1440 640" fill="none" stroke={strokeColor} strokeWidth="0.4"/>
-      <path d="M0 200 Q500 160 900 220 Q1200 260 1440 190" fill="none" stroke={strokeColor} strokeWidth="0.7"/>
-      <path d="M0 240 Q420 200 850 260 Q1150 300 1440 230" fill="none" stroke={strokeColor} strokeWidth="0.5"/>
-      <path d="M0 150 Q600 120 1000 170 Q1300 200 1440 140" fill="none" stroke={strokeColor} strokeWidth="0.4"/>
-      <circle cx="200" cy="700" r="160" fill="none" stroke={strokeColor} strokeWidth="0.6"/>
-      <circle cx="200" cy="700" r="200" fill="none" stroke={strokeColor} strokeWidth="0.4"/>
-      <circle cx="1200" cy="200" r="300" fill="none" stroke={strokeColor} strokeWidth="0.6"/>
-      <circle cx="1200" cy="200" r="350" fill="none" stroke={strokeColor} strokeWidth="0.4"/>
+      <path d="M0 340 Q360 280 720 350 Q1080 420 1440 320" fill="none" stroke={strokeColor} strokeWidth="1.5" />
+      <path d="M0 380 Q400 320 800 390 Q1100 440 1440 360" fill="none" stroke={strokeColor} strokeWidth="1.2" />
+      <path d="M0 420 Q300 370 650 430 Q1000 480 1440 400" fill="none" stroke={strokeColor} strokeWidth="1" />
+      <path d="M0 480 Q350 430 700 490 Q1050 540 1440 450" fill="none" stroke={strokeColor} strokeWidth="0.8" />
+      <path d="M0 540 Q380 500 750 540 Q1100 580 1440 510" fill="none" stroke={strokeColor} strokeWidth="0.6" />
+      <path d="M0 600 Q320 560 680 610 Q1020 650 1440 570" fill="none" stroke={strokeColor} strokeWidth="0.5" />
+      <path d="M0 660 Q400 640 780 660 Q1100 700 1440 640" fill="none" stroke={strokeColor} strokeWidth="0.4" />
+      <path d="M0 200 Q500 160 900 220 Q1200 260 1440 190" fill="none" stroke={strokeColor} strokeWidth="0.7" />
+      <path d="M0 240 Q420 200 850 260 Q1150 300 1440 230" fill="none" stroke={strokeColor} strokeWidth="0.5" />
+      <path d="M0 150 Q600 120 1000 170 Q1300 200 1440 140" fill="none" stroke={strokeColor} strokeWidth="0.4" />
+      <circle cx="200" cy="700" r="160" fill="none" stroke={strokeColor} strokeWidth="0.6" />
+      <circle cx="200" cy="700" r="200" fill="none" stroke={strokeColor} strokeWidth="0.4" />
+      <circle cx="1200" cy="200" r="300" fill="none" stroke={strokeColor} strokeWidth="0.6" />
+      <circle cx="1200" cy="200" r="350" fill="none" stroke={strokeColor} strokeWidth="0.4" />
     </svg>
   );
 }
@@ -63,57 +64,17 @@ export default function Help() {
       <SvgBackground key={theme} />
 
       {/* ── Navbar ── */}
-      <header 
-        className="w-full h-16 sm:h-20 shrink-0 flex items-center justify-between px-6 sm:px-10 border-b relative z-10 sticky top-0 backdrop-blur-md"
-        style={{ 
-          backgroundColor: 'var(--color-surface-overlay)',
-          borderColor: 'var(--color-border)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)'
-        }}
+      <a
+        href="options.html"
+        className="absolute right-4 top-4 flex items-center justify-center p-2.5 px-4 transition-colors cursor-pointer border font-bold gap-2 text-primary-600 text-xs rounded-lg border-primary-200 hover:border-primary-300 bg-primary-50"
+        title="Open Settings"
       >
-        <div className="flex items-center gap-4">
-          <a 
-            href="options.html" 
-            className="flex items-center justify-center p-2 rounded-xl transition-colors shrink-0"
-            style={{ 
-              backgroundColor: 'var(--color-surface-raised)',
-              border: '1px solid var(--color-border)',
-              color: 'var(--color-text-secondary)'
-            }}
-            title="Back to Settings"
-          >
-            <ArrowLeft size={18} />
-          </a>
-          <div className="flex items-center gap-3">
-            <div className="bg-primary-500 text-white p-2 rounded-xl shadow-sm hidden sm:flex">
-              <BookOpen size={20} />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight" style={{ color: 'var(--color-text-primary)' }}>Documentation</h1>
-              <p className="text-xs font-bold uppercase tracking-wider hidden sm:block mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>Mastering AutoFiller</p>
-            </div>
-          </div>
-        </div>
-        <div>
-          <button 
-            onClick={toggleTheme}
-            className="flex items-center justify-center p-2.5 rounded-xl transition-colors cursor-pointer border"
-            style={{ 
-              backgroundColor: 'var(--color-surface-raised)',
-              borderColor: 'var(--color-border)',
-              color: 'var(--color-text-secondary)'
-            }}
-            title="Toggle Theme"
-          >
-            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
-        </div>
-      </header>
+        <Settings2 size={16} /> <span className="hidden sm:inline">Settings</span>
+      </a>
 
       {/* ── Main Content ── */}
       <main className="flex-1 w-full max-w-4xl mx-auto px-6 py-12 relative z-10 space-y-10 selection:bg-primary-200/40">
-        
+
         {/* Intro */}
         <div className="text-center md:text-left md:flex items-center gap-8 mb-4">
           <div className="flex-1 space-y-4">
@@ -125,7 +86,7 @@ export default function Help() {
         </div>
 
         {/* Section 1: Architecture */}
-        <section 
+        <section
           className="p-8 rounded-3xl shadow-sm border overflow-hidden relative"
           style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}
         >
@@ -153,7 +114,7 @@ export default function Help() {
         </section>
 
         {/* Section 2: URL Masking */}
-        <section 
+        <section
           className="p-8 rounded-3xl shadow-sm border"
           style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}
         >
@@ -192,7 +153,7 @@ export default function Help() {
         </section>
 
         {/* Section 3: Field Targets */}
-        <section 
+        <section
           className="p-8 rounded-3xl shadow-sm border"
           style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}
         >
@@ -205,7 +166,7 @@ export default function Help() {
           <p className="text-[14px] font-medium leading-relaxed mb-6" style={{ color: 'var(--color-text-secondary)' }}>
             To locate elements, AutoFiller queries using standard querySelector CSS syntax. Right-click any physical input to 'Inspect' its DOM attributes for precision.
           </p>
-          
+
           <div className="border rounded-2xl overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
             <table className="w-full text-left border-collapse">
               <thead>
@@ -242,7 +203,7 @@ export default function Help() {
         </section>
 
         {/* Section 4: Hotkeys */}
-        <section 
+        <section
           className="p-8 rounded-3xl shadow-sm border"
           style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}
         >
@@ -253,26 +214,26 @@ export default function Help() {
             <h3 className="text-xl font-extrabold" style={{ color: 'var(--color-text-primary)' }}>4. Engine Executions</h3>
           </div>
           <div className="flex flex-col sm:flex-row gap-5">
-            <div 
+            <div
               className="flex-1 p-6 border rounded-2xl text-center space-y-4"
               style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}
             >
               <div className="flex justify-center mb-3 text-primary-500"><Keyboard size={28} /></div>
               <p className="font-extrabold text-[15px]" style={{ color: 'var(--color-text-primary)' }}>Inject Routine</p>
               <div className="flex items-center justify-center gap-2 font-mono-code text-sm font-bold opacity-80" style={{ color: 'var(--color-text-secondary)' }}>
-                <kbd className="px-2.5 py-1.5 border rounded-lg bg-surface shadow-sm">Ctrl</kbd> + 
+                <kbd className="px-2.5 py-1.5 border rounded-lg bg-surface shadow-sm">Ctrl</kbd> +
                 <kbd className="px-2.5 py-1.5 border rounded-lg bg-surface shadow-sm">Space</kbd>
               </div>
             </div>
-            <div 
+            <div
               className="flex-1 p-6 border rounded-2xl text-center space-y-4"
               style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}
             >
               <div className="flex justify-center mb-3 text-danger-400"><Trash2 size={28} /></div>
               <p className="font-extrabold text-[15px]" style={{ color: 'var(--color-text-primary)' }}>Wipe Sequence</p>
               <div className="flex items-center justify-center gap-2 font-mono-code text-sm font-bold opacity-80" style={{ color: 'var(--color-text-secondary)' }}>
-                <kbd className="px-2 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">Ctrl</kbd> + 
-                <kbd className="px-2 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">Shift</kbd> + 
+                <kbd className="px-2 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">Ctrl</kbd> +
+                <kbd className="px-2 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">Shift</kbd> +
                 <kbd className="px-2 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">Space</kbd>
               </div>
             </div>
@@ -282,7 +243,7 @@ export default function Help() {
       </main>
 
       {/* ── Footer ── */}
-      <footer 
+      <footer
         className="w-full mt-auto border-t py-8 mt-12 mb-12"
         style={{ borderColor: 'var(--color-border)' }}
       >

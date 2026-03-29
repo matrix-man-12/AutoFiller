@@ -498,6 +498,22 @@ export default function Options() {
     }
   }
 
+  // Auto-disable an app if all its rules get disabled
+  useEffect(() => {
+    let changed = false;
+    const newApps = apps.map(app => {
+      if (app.enabled && app.rules.length > 0 && app.rules.every(r => !r.enabled)) {
+        changed = true;
+        return { ...app, enabled: false };
+      }
+      return app;
+    });
+    
+    if (changed) {
+      persistData(newApps);
+    }
+  }, [apps]);
+
   // ─── Import Handler ────────────────────────────────────────────────────────
   const handleImportFile = (e) => {
     const file = e.target.files?.[0];
@@ -590,7 +606,7 @@ export default function Options() {
     const newApp = {
       id: generateId('app'),
       name: 'New Application',
-      enabled: true,
+      enabled: false,
       rules: []
     };
     const cloned = [...apps, newApp];
@@ -882,7 +898,6 @@ export default function Options() {
           <div className="flex gap-2 mt-4">
             <a 
               href="help.html" 
-              target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 py-2 px-3 text-primary-600 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 hover:border-primary-300 bg-primary-50"
             >
@@ -957,7 +972,7 @@ export default function Options() {
                     onClick={() => { 
                       setSelectedItemType('app'); 
                       setSelectedItemId(app.id); 
-                      setSidebarCollapsed(prev => ({ ...prev, [app.id]: false }));
+                      setSidebarCollapsed(prev => ({ ...prev, [app.id]: !prev[app.id] }));
                     }}
                   >
                     <Layers size={15} className={selectedItemType === 'app' && selectedItemId === app.id ? 'text-primary-500' : ''} style={selectedItemType === 'app' && selectedItemId === app.id ? {} : { color: 'var(--color-text-tertiary)' }} />
