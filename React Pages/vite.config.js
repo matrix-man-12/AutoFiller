@@ -16,7 +16,8 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'index.html'),
         popup: resolve(__dirname, 'popup.html'),
-        options: resolve(__dirname, 'options.html')
+        options: resolve(__dirname, 'options.html'),
+        help: resolve(__dirname, 'help.html')
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',

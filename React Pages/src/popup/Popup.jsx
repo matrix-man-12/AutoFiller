@@ -107,7 +107,7 @@ export default function Popup() {
           Settings
         </button>
         <a 
-          href="../help.html" 
+          href="help.html" 
           target="_blank" 
           title="Help & Docs"
           className="flex items-center justify-center p-2.5 rounded-lg cursor-pointer border"

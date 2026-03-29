@@ -64,19 +64,19 @@
 
 /* ── Dark Theme Overrides ── */
 [data-theme="dark"] {
-  --color-surface: #1A1A1A;
-  --color-surface-card: #232323;
-  --color-surface-raised: #2D2D2D;
-  --color-surface-overlay: rgba(0, 0, 0, 0.65);
+  --color-surface: #262626;
+  --color-surface-card: #333333;
+  --color-surface-raised: #3F3F3F;
+  --color-surface-overlay: rgba(0, 0, 0, 0.5);
 
   --color-text-primary: #F0ECE6;
   --color-text-secondary: #A8A198;
   --color-text-tertiary: #7A746C;
   --color-text-inverse: #1A1A1A;
 
-  --color-border: #3A3632;
-  --color-border-subtle: #2F2C28;
-  --color-border-strong: #4A453F;
+  --color-border: #525252;
+  --color-border-subtle: #3D3D3D;
+  --color-border-strong: #666666;
 }
 
 @layer base {

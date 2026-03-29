@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AutoFiller Help</title>
+    <!-- Dark Mode pre-initialization script to prevent FOUC -->
+    <script>
+      (function() {
+        try {
+          const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const userDark = localStorage.getItem('autofiller-theme-dark');
+          const isDark = userDark === 'true' || (userDark === null && systemDark);
+          if (isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        } catch (e) {
+          console.error('Theme init error:', e);
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/help-D0LScVQM.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/index-BOlWcLMh.js">
+    <link rel="modulepreload" crossorigin href="./assets/globe-Dz-FP0xK.js">
+    <link rel="modulepreload" crossorigin href="./assets/zap-CW09tHkc.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-VR3dHxl9.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

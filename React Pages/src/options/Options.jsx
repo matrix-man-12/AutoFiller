@@ -341,6 +341,67 @@ function ExportModal({ apps, onClose }) {
   );
 }
 
+// ─── Custom UI Select ───────────────────────────────────────────────────────
+const CustomSelect = ({ value, onChange, options, className = '' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedOption = options.find(o => o.value === value) || options[0];
+  const selectRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (selectRef.current && !selectRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div className={`relative ${className}`} ref={selectRef}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center justify-between w-full px-4 py-3 border rounded-xl font-bold text-[13px] select-none cursor-pointer transition-all duration-200 ${isOpen ? 'ring-2 ring-primary-400/30' : ''}`}
+        style={{ 
+          backgroundColor: 'var(--color-surface-raised)',
+          borderColor: isOpen ? 'var(--color-primary-400)' : 'var(--color-border)',
+          color: 'var(--color-text-primary)'
+        }}
+      >
+        <span className="truncate">{selectedOption?.label || 'Select...'}</span>
+        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--color-text-tertiary)' }} />
+      </div>
+      
+      {isOpen && (
+        <div 
+          className="absolute z-20 w-full mt-2 py-1.5 rounded-xl border shadow-lg overflow-y-auto max-h-60 flex flex-col"
+          style={{ 
+            backgroundColor: 'var(--color-surface-card)',
+            borderColor: 'var(--color-border)'
+          }}
+        >
+          {options.map(opt => (
+            <div 
+              key={opt.value}
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={`px-4 py-2.5 text-[13px] font-bold cursor-pointer transition-colors ${opt.value === value ? '' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+              style={{ 
+                backgroundColor: opt.value === value ? 'var(--color-primary-50, #FFF8ED)' : 'transparent',
+                color: opt.value === value ? 'var(--color-primary-700, #8B5526)' : 'var(--color-text-primary)'
+              }}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Toast ───────────────────────────────────────────────────────────────────
 function Toast({ message, type = 'success', onDismiss }) {
   useEffect(() => {
@@ -820,7 +881,7 @@ export default function Options() {
           {/* Utility Row */}
           <div className="flex gap-2 mt-4">
             <a 
-              href="../help.html" 
+              href="help.html" 
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 py-2 px-3 text-primary-600 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 hover:border-primary-300 bg-primary-50"
@@ -893,7 +954,11 @@ export default function Options() {
                   </button>
                   <div 
                     className="flex-1 flex items-center gap-2 min-w-0"
-                    onClick={() => { setSelectedItemType('app'); setSelectedItemId(app.id); }}
+                    onClick={() => { 
+                      setSelectedItemType('app'); 
+                      setSelectedItemId(app.id); 
+                      setSidebarCollapsed(prev => ({ ...prev, [app.id]: false }));
+                    }}
                   >
                     <Layers size={15} className={selectedItemType === 'app' && selectedItemId === app.id ? 'text-primary-500' : ''} style={selectedItemType === 'app' && selectedItemId === app.id ? {} : { color: 'var(--color-text-tertiary)' }} />
                     <span className="truncate text-[13px] font-bold">{app.name || 'Untitled'}</span>
@@ -910,33 +975,39 @@ export default function Options() {
                 </div>
 
                 {/* URL Rules Sub-list (collapsible) */}
-                {!sidebarCollapsed[app.id] && app.rules.map(r => (
-                  <div 
-                    key={r.id}
-                    onClick={() => { setSelectedItemType('rule'); setSelectedItemId(r.id); }}
-                    className="ml-7 flex items-center justify-between px-3 py-2 rounded-md cursor-pointer"
-                    style={{
-                      backgroundColor: selectedItemId === r.id && selectedItemType === 'rule'
-                        ? 'var(--color-primary-50, #FFF8ED)'
-                        : 'transparent',
-                      color: selectedItemId === r.id && selectedItemType === 'rule'
-                        ? 'var(--color-primary-700, #8B5526)'
-                        : 'var(--color-text-secondary)'
-                    }}
-                  >
-                    <div className="flex items-center gap-2 text-[12px] font-semibold truncate min-w-0">
-                      <Globe size={13} className={selectedItemType === 'rule' && selectedItemId === r.id ? 'text-primary-500' : ''} style={selectedItemType === 'rule' && selectedItemId === r.id ? {} : { color: 'var(--color-text-tertiary)' }} />
-                      <span className="truncate">{(r.urlPatterns && r.urlPatterns[0]?.value) || r.urlPattern || 'New Rule'}</span>
-                    </div>
-                    <span 
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
-                        r.enabled ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-600'
-                      }`}
-                    >
-                      {r.enabled ? 'ON' : 'OFF'}
-                    </span>
+                <div 
+                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${sidebarCollapsed[app.id] ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}
+                >
+                  <div className="min-h-0 overflow-hidden space-y-0.5">
+                    {app.rules.map(r => (
+                      <div 
+                        key={r.id}
+                        onClick={() => { setSelectedItemType('rule'); setSelectedItemId(r.id); }}
+                        className="ml-7 flex items-center justify-between px-3 py-2 rounded-md cursor-pointer"
+                        style={{
+                          backgroundColor: selectedItemId === r.id && selectedItemType === 'rule'
+                            ? 'var(--color-primary-50, #FFF8ED)'
+                            : 'transparent',
+                          color: selectedItemId === r.id && selectedItemType === 'rule'
+                            ? 'var(--color-primary-700, #8B5526)'
+                            : 'var(--color-text-secondary)'
+                        }}
+                      >
+                        <div className="flex items-center gap-2 text-[12px] font-semibold truncate min-w-0">
+                          <Globe size={13} className={selectedItemType === 'rule' && selectedItemId === r.id ? 'text-primary-500' : ''} style={selectedItemType === 'rule' && selectedItemId === r.id ? {} : { color: 'var(--color-text-tertiary)' }} />
+                          <span className="truncate">{(r.urlPatterns && r.urlPatterns[0]?.value) || r.urlPattern || 'New Rule'}</span>
+                        </div>
+                        <span 
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+                            r.enabled ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-600'
+                          }`}
+                        >
+                          {r.enabled ? 'ON' : 'OFF'}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
             ))
           )}
@@ -1097,40 +1168,27 @@ export default function Options() {
                   {/* Parent Application UI */}
                   <div>
                     <label className="block text-[13px] font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>Parent Application</label>
-                    <select 
+                    <CustomSelect 
                       value={apps.find(a => a.rules.some(r => r.id === currentRule.id))?.id || ''}
-                      onChange={(e) => handleMoveRule(currentRule.id, e.target.value)}
-                      className="w-full md:w-1/2 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 font-bold text-sm"
-                      style={{ 
-                        backgroundColor: 'var(--color-surface-raised)',
-                        borderColor: 'var(--color-border)',
-                        color: 'var(--color-text-primary)',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {apps.map(app => (
-                        <option key={app.id} value={app.id}>{app.name || 'Unnamed Application'}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => handleMoveRule(currentRule.id, val)}
+                      options={apps.map(app => ({ value: app.id, label: app.name || 'Unnamed Application' }))}
+                      className="w-full md:w-1/2"
+                    />
                   </div>
 
                   <div className="flex flex-col md:flex-row gap-5">
                   <div className="w-full md:w-48 shrink-0">
                     <label className="block text-[13px] font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>Match Type</label>
-                    <select 
+                    <CustomSelect 
                       value={currentRule.matchType}
-                      onChange={(e) => updateRuleField(currentRule.id, 'matchType', e.target.value)}
-                      className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 font-bold text-sm"
-                      style={{ 
-                        backgroundColor: 'var(--color-surface-raised)',
-                        borderColor: 'var(--color-border)',
-                        color: 'var(--color-text-primary)'
-                      }}
-                    >
-                      <option value="exact">Exact Match</option>
-                      <option value="startsWith">Starts With</option>
-                      <option value="wildcard">Wildcard (*)</option>
-                    </select>
+                      onChange={(val) => updateRuleField(currentRule.id, 'matchType', val)}
+                      options={[
+                        { value: 'exact', label: 'Exact Match' },
+                        { value: 'startsWith', label: 'Starts With' },
+                        { value: 'wildcard', label: 'Wildcard (*)' }
+                      ]}
+                      className="w-full"
+                    />
                   </div>
                   <div className="flex-1 space-y-3">
                     <label className="block text-[13px] font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>URL Patterns</label>
@@ -1300,7 +1358,7 @@ export default function Options() {
                             style={{ borderColor: 'var(--color-border)' }}
                             title="Remove Field"
                           >
-                            <XSquare size={20} />
+                            <Trash2 size={20} />
                           </button>
                         </div>
 
