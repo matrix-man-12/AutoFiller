@@ -1,7 +1,18 @@
-import React from 'react';
-import { Zap, Eraser, Settings, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Zap, Eraser, Settings, HelpCircle, Sun, Moon } from 'lucide-react';
 
 export default function Popup() {
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('autofiller-theme') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('autofiller-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+
   const handleAutoFill = () => {
     if (chrome && chrome.runtime) {
       chrome.runtime.sendMessage({ action: 'trigger_autofill' });
@@ -29,45 +40,84 @@ export default function Popup() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-6 bg-white w-full">
-      <div className="text-center">
-        <h2 className="text-[22px] font-extrabold text-primary-600 tracking-tight leading-none">AutoFiller</h2>
-        <p className="text-[13px] font-semibold text-gray-500 mt-0.5">Quick Actions</p>
+    <div 
+      className="flex flex-col w-full"
+      style={{ backgroundColor: 'var(--color-surface)' }}
+    >
+      {/* Header strip */}
+      <div 
+        className="px-5 pt-5 pb-4 border-b"
+        style={{ 
+          backgroundColor: 'var(--color-surface-card)', 
+          borderColor: 'var(--color-border-subtle)' 
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-extrabold tracking-tight text-primary-500 leading-none">AutoFiller</h2>
+            <p className="text-[11px] font-semibold mt-1" style={{ color: 'var(--color-text-tertiary)' }}>Quick Actions</p>
+          </div>
+          <button 
+            onClick={toggleTheme}
+            className="p-2 rounded-lg cursor-pointer"
+            style={{ color: 'var(--color-text-secondary)' }}
+            title={theme === 'light' ? 'Dark mode' : 'Light mode'}
+          >
+            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
+        </div>
       </div>
 
-      <button 
-        onClick={handleAutoFill}
-        className="flex items-center justify-center gap-2.5 w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
-      >
-        <Zap size={18} className="fill-white" />
-        AutoFill Now
-      </button>
+      {/* Action buttons */}
+      <div className="px-4 pt-4 pb-3 space-y-2.5">
+        <button 
+          onClick={handleAutoFill}
+          className="flex items-center justify-center gap-2.5 w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold shadow-sm cursor-pointer"
+        >
+          <Zap size={17} className="fill-white" />
+          AutoFill Now
+        </button>
 
-      <button 
-        onClick={handleAutoClear}
-        className="flex items-center justify-center gap-2.5 w-full py-3 px-4 bg-danger-500 hover:bg-danger-600 text-white rounded-xl font-bold shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
-      >
-        <Eraser size={18} />
-        Auto Clear
-      </button>
+        <button 
+          onClick={handleAutoClear}
+          className="flex items-center justify-center gap-2.5 w-full py-3 px-4 bg-danger-500 hover:bg-danger-600 text-white rounded-xl font-bold shadow-sm cursor-pointer"
+        >
+          <Eraser size={17} />
+          Clear Fields
+        </button>
+      </div>
 
-      <hr className="border-gray-100 my-1" />
+      {/* Divider */}
+      <div className="px-4">
+        <div className="h-px" style={{ backgroundColor: 'var(--color-border-subtle)' }} />
+      </div>
 
-      <div className="flex flex-row gap-2">
+      {/* Bottom row */}
+      <div className="flex gap-2 px-4 py-3">
         <button 
           onClick={openOptions}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 rounded-lg font-bold transition-all hover:-translate-y-px cursor-pointer shadow-sm"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 border rounded-lg font-bold cursor-pointer text-sm"
+          style={{ 
+            backgroundColor: 'var(--color-surface-card)',
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-primary)'
+          }}
         >
-          <Settings size={16} className="text-gray-600" />
+          <Settings size={15} style={{ color: 'var(--color-text-secondary)' }} />
           Settings
         </button>
         <a 
           href="../help.html" 
           target="_blank" 
           title="Help & Docs"
-          className="flex items-center justify-center p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-all hover:-translate-y-px shadow-sm cursor-pointer"
+          className="flex items-center justify-center p-2.5 rounded-lg cursor-pointer border"
+          style={{ 
+            backgroundColor: 'var(--color-surface-raised)',
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-secondary)'
+          }}
         >
-          <HelpCircle size={18} />
+          <HelpCircle size={17} />
         </a>
       </div>
     </div>

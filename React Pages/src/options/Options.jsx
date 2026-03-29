@@ -15,14 +15,116 @@ import {
   Square,
   X,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Sun,
+  Moon,
+  Globe,
+  Layers,
+  FileText
 } from 'lucide-react';
 
 const generateId = (prefix) => `${prefix}_${Math.random().toString(36).substr(2, 9)}`;
 
+// ─── SVG Background ─────────────────────────────────────────────────────────
+function SvgBackground() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const strokeColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(180,160,130,0.08)';
+  
+  return (
+    <svg
+      className="fixed inset-0 w-full h-full pointer-events-none"
+      style={{ zIndex: 0 }}
+      xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="none"
+      viewBox="0 0 1440 900"
+    >
+      {/* Topographic contour lines */}
+      <path d="M0 340 Q360 280 720 350 Q1080 420 1440 320" fill="none" stroke={strokeColor} strokeWidth="1.5"/>
+      <path d="M0 380 Q400 320 800 390 Q1100 440 1440 360" fill="none" stroke={strokeColor} strokeWidth="1.2"/>
+      <path d="M0 420 Q300 370 650 430 Q1000 480 1440 400" fill="none" stroke={strokeColor} strokeWidth="1"/>
+      <path d="M0 480 Q350 430 700 490 Q1050 540 1440 450" fill="none" stroke={strokeColor} strokeWidth="0.8"/>
+      <path d="M0 540 Q380 500 750 540 Q1100 580 1440 510" fill="none" stroke={strokeColor} strokeWidth="0.6"/>
+      <path d="M0 600 Q320 560 680 610 Q1020 650 1440 570" fill="none" stroke={strokeColor} strokeWidth="0.5"/>
+      <path d="M0 660 Q400 640 780 660 Q1100 700 1440 640" fill="none" stroke={strokeColor} strokeWidth="0.4"/>
+      
+      {/* Secondary wave set offset */}
+      <path d="M0 200 Q500 160 900 220 Q1200 260 1440 190" fill="none" stroke={strokeColor} strokeWidth="0.7"/>
+      <path d="M0 240 Q420 200 850 260 Q1150 300 1440 230" fill="none" stroke={strokeColor} strokeWidth="0.5"/>
+      <path d="M0 150 Q600 120 1000 170 Q1300 200 1440 140" fill="none" stroke={strokeColor} strokeWidth="0.4"/>
+      
+      {/* Subtle circles */}
+      <circle cx="200" cy="700" r="160" fill="none" stroke={strokeColor} strokeWidth="0.6"/>
+      <circle cx="200" cy="700" r="200" fill="none" stroke={strokeColor} strokeWidth="0.4"/>
+      <circle cx="1200" cy="200" r="140" fill="none" stroke={strokeColor} strokeWidth="0.5"/>
+      <circle cx="1200" cy="200" r="180" fill="none" stroke={strokeColor} strokeWidth="0.3"/>
+    </svg>
+  );
+}
+
+// ─── Delete Confirmation Modal ───────────────────────────────────────────────
+function DeleteModal({ title, description, onConfirm, onCancel }) {
+  return (
+    <div 
+      className="fixed inset-0 z-[60] flex items-center justify-center"
+      style={{ backgroundColor: 'var(--color-surface-overlay)' }}
+      onClick={e => e.target === e.currentTarget && onCancel()}
+    >
+      <div 
+        className="w-full max-w-sm mx-4 rounded-2xl shadow-2xl overflow-hidden border"
+        style={{ 
+          backgroundColor: 'var(--color-surface-card)', 
+          borderColor: 'var(--color-border)' 
+        }}
+      >
+        <div className="p-6 text-center">
+          <div 
+            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ backgroundColor: 'var(--color-danger-50)' }}
+          >
+            <AlertTriangle size={28} className="text-danger-500" />
+          </div>
+          <h3 
+            className="text-lg font-bold mb-2"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            {title}
+          </h3>
+          <p 
+            className="text-sm"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            {description}
+          </p>
+        </div>
+        <div 
+          className="flex gap-3 px-6 py-4 border-t"
+          style={{ borderColor: 'var(--color-border-subtle)', backgroundColor: 'var(--color-surface-raised)' }}
+        >
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 px-4 text-sm font-bold rounded-xl border cursor-pointer"
+            style={{ 
+              backgroundColor: 'var(--color-surface-card)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text-primary)'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-2.5 px-4 text-sm font-bold rounded-xl cursor-pointer text-white bg-danger-500 hover:bg-danger-600 border border-danger-500 hover:border-danger-600"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Export Modal ───────────────────────────────────────────────────────────
 function ExportModal({ apps, onClose }) {
-  // Selection state: { [appId]: { checked: bool, rules: { [ruleId]: bool } } }
   const [sel, setSel] = useState(() => {
     const init = {};
     apps.forEach(app => {
@@ -90,38 +192,50 @@ function ExportModal({ apps, onClose }) {
     acc + (a.rules.filter(r => sel[a.id]?.rules[r.id]).length), 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
-        
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center" 
+      style={{ backgroundColor: 'var(--color-surface-overlay)' }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div 
+        className="rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col overflow-hidden border"
+        style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+        <div 
+          className="flex items-center justify-between px-6 py-5 border-b"
+          style={{ borderColor: 'var(--color-border-subtle)' }}
+        >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary-50 rounded-xl">
               <Upload size={18} className="text-primary-600" />
             </div>
             <div>
-              <h2 className="text-[17px] font-extrabold text-gray-900">Export Settings</h2>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">Choose what to include in the export file</p>
+              <h2 className="text-[17px] font-extrabold" style={{ color: 'var(--color-text-primary)' }}>Export Settings</h2>
+              <p className="text-xs font-medium mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>Choose what to include in the export file</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
-            <X size={18} className="text-gray-500" />
+          <button onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: 'var(--color-text-tertiary)' }}>
+            <X size={18} />
           </button>
         </div>
 
         {/* Select all */}
-        <div className="px-6 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+        <div 
+          className="px-6 py-3 border-b flex items-center justify-between"
+          style={{ borderColor: 'var(--color-border-subtle)', backgroundColor: 'var(--color-surface-raised)' }}
+        >
           <button
             onClick={toggleAll}
-            className="flex items-center gap-2 text-[13px] font-bold text-primary-700 hover:text-primary-800 transition-colors cursor-pointer"
+            className="flex items-center gap-2 text-[13px] font-bold text-primary-600 cursor-pointer"
           >
             {allAppsChecked
               ? <CheckSquare size={16} className="text-primary-600" />
-              : <Square size={16} className="text-gray-400" />
+              : <Square size={16} style={{ color: 'var(--color-text-tertiary)' }} />
             }
             {allAppsChecked ? 'Deselect All' : 'Select All'}
           </button>
-          <span className="text-[12px] font-semibold text-gray-500">
+          <span className="text-[12px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>
             {totalSelected} app{totalSelected !== 1 ? 's' : ''} · {totalRulesSelected} rule{totalRulesSelected !== 1 ? 's' : ''}
           </span>
         </div>
@@ -129,27 +243,31 @@ function ExportModal({ apps, onClose }) {
         {/* List */}
         <div className="overflow-y-auto max-h-[340px] px-4 py-3 space-y-1">
           {apps.length === 0 ? (
-            <div className="text-center py-10 text-gray-400 text-[13px] font-semibold">No apps to export.</div>
+            <div className="text-center py-10 text-[13px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>No apps to export.</div>
           ) : (
             apps.map(app => (
-              <div key={app.id} className="rounded-xl border border-gray-100 overflow-hidden">
+              <div key={app.id} className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-border-subtle)' }}>
                 {/* App row */}
-                <div className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors">
+                <div 
+                  className="flex items-center gap-3 px-4 py-3"
+                  style={{ backgroundColor: 'var(--color-surface-card)' }}
+                >
                   <button
                     onClick={() => toggleApp(app.id)}
                     className="shrink-0 cursor-pointer"
                   >
                     {sel[app.id]?.checked
                       ? <CheckSquare size={17} className="text-primary-600" />
-                      : <Square size={17} className="text-gray-300" />
+                      : <Square size={17} style={{ color: 'var(--color-text-tertiary)' }} />
                     }
                   </button>
-                  <FolderGit2 size={15} className="text-gray-400 shrink-0" />
-                  <span className="flex-1 text-[13px] font-bold text-gray-800 truncate">{app.name || 'Untitled App'}</span>
+                  <FolderGit2 size={15} style={{ color: 'var(--color-text-tertiary)' }} className="shrink-0" />
+                  <span className="flex-1 text-[13px] font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>{app.name || 'Untitled App'}</span>
                   {app.rules.length > 0 && (
                     <button
                       onClick={() => toggleExpand(app.id)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                      className="cursor-pointer"
+                      style={{ color: 'var(--color-text-tertiary)' }}
                     >
                       {expanded[app.id]
                         ? <ChevronDown size={15} />
@@ -157,27 +275,30 @@ function ExportModal({ apps, onClose }) {
                       }
                     </button>
                   )}
-                  <span className="text-[11px] font-bold text-gray-400 ml-1">
+                  <span className="text-[11px] font-bold ml-1" style={{ color: 'var(--color-text-tertiary)' }}>
                     {app.rules.filter(r => sel[app.id]?.rules[r.id]).length}/{app.rules.length} rules
                   </span>
                 </div>
 
                 {/* Rules sub-list */}
                 {expanded[app.id] && app.rules.length > 0 && (
-                  <div className="bg-gray-50 border-t border-gray-100 px-4 py-2 space-y-1.5">
+                  <div 
+                    className="border-t px-4 py-2 space-y-1.5"
+                    style={{ borderColor: 'var(--color-border-subtle)', backgroundColor: 'var(--color-surface-raised)' }}
+                  >
                     {app.rules.map(rule => (
                       <label key={rule.id} className="flex items-center gap-3 cursor-pointer group">
                         <button onClick={() => toggleRule(app.id, rule.id)} className="shrink-0 cursor-pointer">
                           {sel[app.id]?.rules[rule.id]
                             ? <CheckSquare size={15} className="text-primary-500" />
-                            : <Square size={15} className="text-gray-300" />
+                            : <Square size={15} style={{ color: 'var(--color-text-tertiary)' }} />
                           }
                         </button>
-                        <Settings2 size={13} className="text-gray-400 shrink-0" />
-                        <span className="text-[12px] font-semibold text-gray-600 truncate group-hover:text-gray-800 transition-colors">
+                        <Globe size={13} style={{ color: 'var(--color-text-tertiary)' }} className="shrink-0" />
+                        <span className="text-[12px] font-semibold truncate" style={{ color: 'var(--color-text-secondary)' }}>
                           {rule.urlPattern || 'No URL pattern'}
                         </span>
-                        <span className="ml-auto text-[10px] font-bold text-gray-400 shrink-0">{rule.fields.length} fields</span>
+                        <span className="ml-auto text-[10px] font-bold shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>{rule.fields.length} fields</span>
                       </label>
                     ))}
                   </div>
@@ -188,17 +309,25 @@ function ExportModal({ apps, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+        <div 
+          className="flex items-center justify-end gap-3 px-6 py-4 border-t"
+          style={{ borderColor: 'var(--color-border-subtle)', backgroundColor: 'var(--color-surface-raised)' }}
+        >
           <button
             onClick={onClose}
-            className="px-5 py-2 text-[13px] font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+            className="px-5 py-2 text-[13px] font-bold rounded-xl border cursor-pointer"
+            style={{ 
+              backgroundColor: 'var(--color-surface-card)', 
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text-primary)' 
+            }}
           >
             Cancel
           </button>
           <button
             onClick={handleExport}
             disabled={totalSelected === 0}
-            className="flex items-center gap-2 px-5 py-2 text-[13px] font-bold text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors cursor-pointer shadow-sm"
+            className="flex items-center gap-2 px-5 py-2 text-[13px] font-bold text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl cursor-pointer shadow-sm"
           >
             <Upload size={15} />
             Export {totalSelected > 0 ? `(${totalSelected} app${totalSelected !== 1 ? 's' : ''})` : ''}
@@ -217,21 +346,39 @@ function Toast({ message, type = 'success', onDismiss }) {
   }, [onDismiss]);
 
   return (
-    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border text-[13px] font-bold animate-in fade-in slide-in-from-bottom-4 duration-300 ${
-      type === 'success'
-        ? 'bg-white border-success-500/30 text-gray-800'
-        : 'bg-white border-danger-300 text-gray-800'
-    }`}>
+    <div 
+      className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border text-[13px] font-bold ${
+        type === 'success'
+          ? 'border-success-500/30'
+          : 'border-danger-300'
+      }`}
+      style={{ backgroundColor: 'var(--color-surface-card)', color: 'var(--color-text-primary)' }}
+    >
       {type === 'success'
         ? <CheckCircle2 size={17} className="text-success-500 shrink-0" />
-        : <AlertTriangle size={17} className="text-yellow-500 shrink-0" />
+        : <AlertTriangle size={17} className="text-primary-400 shrink-0" />
       }
       {message}
-      <button onClick={onDismiss} className="ml-2 text-gray-400 hover:text-gray-600 cursor-pointer">
+      <button onClick={onDismiss} className="ml-2 cursor-pointer" style={{ color: 'var(--color-text-tertiary)' }}>
         <X size={14} />
       </button>
     </div>
   );
+}
+
+// ─── Theme Toggle Hook ───────────────────────────────────────────────────────
+function useTheme() {
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('autofiller-theme') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('autofiller-theme', theme);
+  }, [theme]);
+
+  const toggle = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  return { theme, toggle };
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -243,6 +390,10 @@ export default function Options() {
   const [loading, setLoading] = useState(true);
   const [showExportModal, setShowExportModal] = useState(false);
   const [toast, setToast] = useState(null); // { message, type }
+  const [deleteModal, setDeleteModal] = useState(null); // { title, description, onConfirm }
+  const [sidebarCollapsed, setSidebarCollapsed] = useState({});
+
+  const { theme, toggle: toggleTheme } = useTheme();
 
   const saveTimeoutRef = useRef(null);
   const importInputRef = useRef(null);
@@ -452,37 +603,60 @@ export default function Options() {
   };
 
   const deleteMapping = (ruleId, fieldId) => {
-    if (!window.confirm('Permanently remove this DOM field mapping?')) return;
-    const cloned = [...apps];
-    for (let a of cloned) {
-      const r = a.rules.find(rx => rx.id === ruleId);
-      if (r) {
-        r.fields = r.fields.filter(f => f.id !== fieldId);
-        persistData(cloned);
-        return;
+    setDeleteModal({
+      title: 'Remove Field',
+      description: 'This field mapping will be permanently deleted. This action cannot be undone.',
+      onConfirm: () => {
+        const cloned = [...apps];
+        for (let a of cloned) {
+          const r = a.rules.find(rx => rx.id === ruleId);
+          if (r) {
+            r.fields = r.fields.filter(f => f.id !== fieldId);
+            persistData(cloned);
+            break;
+          }
+        }
+        setDeleteModal(null);
       }
-    }
+    });
   };
 
   const handleDeleteCurrent = () => {
-    if (!window.confirm('Permanently delete this configuration branch?')) return;
-    let cloned = [...apps];
-    if (selectedItemType === 'app') {
-      cloned = cloned.filter(a => a.id !== selectedItemId);
-    } else if (selectedItemType === 'rule') {
-      cloned.forEach(a => {
-        a.rules = a.rules.filter(r => r.id !== selectedItemId);
-      });
-    }
-    persistData(cloned);
-    setSelectedItemId(null);
-    setSelectedItemType(null);
+    const itemName = selectedItemType === 'app' 
+      ? (currentApp?.name || 'this application')
+      : (currentRule?.urlPattern || 'this URL rule');
+    
+    setDeleteModal({
+      title: selectedItemType === 'app' ? 'Delete Application' : 'Delete URL Rule',
+      description: `"${itemName}" and all its contents will be permanently deleted. This action cannot be undone.`,
+      onConfirm: () => {
+        let cloned = [...apps];
+        if (selectedItemType === 'app') {
+          cloned = cloned.filter(a => a.id !== selectedItemId);
+        } else if (selectedItemType === 'rule') {
+          cloned.forEach(a => {
+            a.rules = a.rules.filter(r => r.id !== selectedItemId);
+          });
+        }
+        persistData(cloned);
+        setSelectedItemId(null);
+        setSelectedItemType(null);
+        setDeleteModal(null);
+      }
+    });
+  };
+
+  const toggleSidebarApp = (appId) => {
+    setSidebarCollapsed(prev => ({ ...prev, [appId]: !prev[appId] }));
   };
 
   if (loading) return null;
 
   return (
-    <div className="flex h-full w-full font-sans text-gray-900 bg-gray-50 overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden relative" style={{ backgroundColor: 'var(--color-surface)' }}>
+
+      {/* SVG Background */}
+      <SvgBackground key={theme} />
 
       {/* Hidden file input for import */}
       <input
@@ -498,40 +672,74 @@ export default function Options() {
         <ExportModal apps={apps} onClose={() => setShowExportModal(false)} />
       )}
 
+      {/* Delete Modal */}
+      {deleteModal && (
+        <DeleteModal 
+          title={deleteModal.title}
+          description={deleteModal.description}
+          onConfirm={deleteModal.onConfirm}
+          onCancel={() => setDeleteModal(null)}
+        />
+      )}
+
       {/* Toast */}
       {toast && (
         <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
 
-      {/* Sidebar UI */}
-      <aside className="w-80 flex flex-col bg-white border-r border-gray-200 shadow-sm z-10 shrink-0">
-        <div className="p-6 pb-5 border-b border-gray-200">
-          <h1 className="text-[26px] font-extrabold text-primary-600 tracking-tight">AutoFiller</h1>
-          <p className="text-sm font-semibold text-gray-500 mt-0.5">Architecture Configuration</p>
-          <a 
-            href="../help.html" 
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 mt-5 py-2 px-3.5 bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-bold rounded-lg transition-colors cursor-pointer"
-          >
-            <ExternalLink size={14} /> Documentation
-          </a>
+      {/* ─── Sidebar ─── */}
+      <aside 
+        className="w-72 flex flex-col border-r shrink-0 z-10 relative"
+        style={{ 
+          backgroundColor: 'var(--color-surface-card)', 
+          borderColor: 'var(--color-border)' 
+        }}
+      >
+        {/* Brand Header */}
+        <div 
+          className="px-5 pt-6 pb-5 border-b"
+          style={{ borderColor: 'var(--color-border-subtle)' }}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <h1 className="text-xl font-extrabold tracking-tight text-primary-500">AutoFiller</h1>
+            <button 
+              onClick={toggleTheme}
+              className="p-2 rounded-lg cursor-pointer"
+              style={{ color: 'var(--color-text-secondary)' }}
+              title={theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+            >
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+          </div>
+          <p className="text-[13px] font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Settings</p>
 
-          {/* Import / Export buttons */}
-          <div className="flex gap-2 mt-3">
+          {/* Utility Row */}
+          <div className="flex gap-2 mt-4">
+            <a 
+              href="../help.html" 
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 py-2 px-3 text-primary-600 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 hover:border-primary-300 bg-primary-50"
+            >
+              <ExternalLink size={13} /> Docs
+            </a>
             <button
               onClick={() => importInputRef.current?.click()}
-              title="Import settings from a JSON file (merges with existing)"
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-bold rounded-lg transition-all cursor-pointer"
+              title="Import settings from a JSON file"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border"
+              style={{ 
+                backgroundColor: 'var(--color-surface-raised)', 
+                borderColor: 'var(--color-border)',
+                color: 'var(--color-text-primary)'
+              }}
             >
               <Download size={13} />
               Import
             </button>
             <button
               onClick={() => setShowExportModal(true)}
-              title="Export settings to a JSON file"
               disabled={apps.length === 0}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-primary-50 hover:bg-primary-100 border border-primary-200 hover:border-primary-300 text-primary-700 text-xs font-bold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border border-primary-200 bg-primary-50 text-primary-600"
             >
               <Upload size={13} />
               Export
@@ -539,53 +747,93 @@ export default function Options() {
           </div>
         </div>
 
-        <div className="p-4">
+        {/* Add Application */}
+        <div className="px-4 py-3">
           <button 
             onClick={handleAddApp}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-[10px] font-bold shadow-sm transition-all hover:-translate-y-px cursor-pointer cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold shadow-sm cursor-pointer"
           >
-            <Plus size={18} /> Add Root App
+            <Plus size={17} /> Add Application
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-6 space-y-4">
+        {/* Application List */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 space-y-1">
           {apps.length === 0 ? (
-            <div className="text-center mt-8 text-gray-400 text-[13px] font-semibold bg-gray-50 py-4 rounded-xl border border-dashed border-gray-200">
-              No Apps configured.
+            <div 
+              className="text-center mt-6 text-[13px] font-semibold py-4 rounded-xl border border-dashed"
+              style={{ 
+                color: 'var(--color-text-tertiary)', 
+                borderColor: 'var(--color-border)',
+                backgroundColor: 'var(--color-surface-raised)'
+              }}
+            >
+              No applications configured.
             </div>
           ) : (
             apps.map(app => (
-              <div key={app.id} className="space-y-1">
-                {/* App Header Row */}
+              <div key={app.id} className="space-y-0.5">
+                {/* App Row */}
                 <div 
-                  onClick={() => { setSelectedItemType('app'); setSelectedItemId(app.id); }}
-                  className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors ${
-                    selectedItemId === app.id && selectedItemType === 'app' ? "bg-primary-50 text-primary-700" : "hover:bg-gray-100"
-                  }`}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer group"
+                  style={{
+                    backgroundColor: selectedItemId === app.id && selectedItemType === 'app'
+                      ? 'var(--color-primary-50, #FFF8ED)' 
+                      : 'transparent',
+                    color: selectedItemId === app.id && selectedItemType === 'app' 
+                      ? 'var(--color-primary-700, #8B5526)' 
+                      : 'var(--color-text-primary)'
+                  }}
                 >
-                  <div className="flex items-center gap-2 font-bold text-[14px]">
-                    <FolderGit2 size={16} className={selectedItemType === 'app' && selectedItemId === app.id ? "text-primary-600" : "text-gray-400"} />
-                    <span className="truncate w-36">{app.name || 'Untitled App'}</span>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleSidebarApp(app.id); }}
+                    className="shrink-0 cursor-pointer p-0.5"
+                    style={{ color: 'var(--color-text-tertiary)' }}
+                  >
+                    {sidebarCollapsed[app.id] ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                  </button>
+                  <div 
+                    className="flex-1 flex items-center gap-2 min-w-0"
+                    onClick={() => { setSelectedItemType('app'); setSelectedItemId(app.id); }}
+                  >
+                    <Layers size={15} className={selectedItemType === 'app' && selectedItemId === app.id ? 'text-primary-500' : ''} style={selectedItemType === 'app' && selectedItemId === app.id ? {} : { color: 'var(--color-text-tertiary)' }} />
+                    <span className="truncate text-[13px] font-bold">{app.name || 'Untitled'}</span>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${app.enabled ? "bg-gray-200 text-gray-700" : "bg-danger-100 text-danger-600"}`}>
+                  <span 
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                      app.enabled 
+                        ? 'bg-success-100 text-success-700' 
+                        : 'bg-danger-100 text-danger-600'
+                    }`}
+                  >
                     {app.enabled ? 'ON' : 'OFF'}
                   </span>
                 </div>
 
-                {/* Rules Sub-list */}
-                {app.rules.map(r => (
+                {/* URL Rules Sub-list (collapsible) */}
+                {!sidebarCollapsed[app.id] && app.rules.map(r => (
                   <div 
                     key={r.id}
                     onClick={() => { setSelectedItemType('rule'); setSelectedItemId(r.id); }}
-                    className={`ml-5 flex items-center justify-between p-2 rounded-md cursor-pointer transition-colors ${
-                      selectedItemId === r.id && selectedItemType === 'rule' ? "bg-primary-50 text-primary-700" : "hover:bg-gray-100 text-gray-600"
-                    }`}
+                    className="ml-7 flex items-center justify-between px-3 py-2 rounded-md cursor-pointer"
+                    style={{
+                      backgroundColor: selectedItemId === r.id && selectedItemType === 'rule'
+                        ? 'var(--color-primary-50, #FFF8ED)'
+                        : 'transparent',
+                      color: selectedItemId === r.id && selectedItemType === 'rule'
+                        ? 'var(--color-primary-700, #8B5526)'
+                        : 'var(--color-text-secondary)'
+                    }}
                   >
-                    <div className="flex items-center gap-2 text-[13px] font-semibold truncate">
-                      <Settings2 size={14} className={selectedItemType === 'rule' && selectedItemId === r.id ? "text-primary-500" : "text-gray-400"}/>
-                      <span className="truncate w-[120px]">{r.urlPattern || 'New Rule'}</span>
+                    <div className="flex items-center gap-2 text-[12px] font-semibold truncate min-w-0">
+                      <Globe size={13} className={selectedItemType === 'rule' && selectedItemId === r.id ? 'text-primary-500' : ''} style={selectedItemType === 'rule' && selectedItemId === r.id ? {} : { color: 'var(--color-text-tertiary)' }} />
+                      <span className="truncate">{r.urlPattern || 'New Rule'}</span>
                     </div>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${r.enabled ? "bg-gray-200 text-gray-600" : "bg-danger-100 text-danger-600"}`}>
+                    <span 
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+                        r.enabled ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-600'
+                      }`}
+                    >
                       {r.enabled ? 'ON' : 'OFF'}
                     </span>
                   </div>
@@ -596,179 +844,302 @@ export default function Options() {
         </div>
       </aside>
 
-      {/* Main Editor UI */}
-      <main className="flex-1 flex flex-col bg-gray-50 h-full overflow-hidden">
+      {/* ─── Main Content ─── */}
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative z-[1]">
         
-        {/* Editor Top Bar */}
-        <header className="h-[88px] bg-white border-b border-gray-200 px-10 flex items-center justify-between shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-0">
-          <h2 className="text-[22px] font-extrabold tracking-tight text-gray-800">
-            {selectedItemType === 'app' ? "Configure Root Provider" : selectedItemType === 'rule' ? "Target Routing Mechanism" : "Initialization Request"}
+        {/* Top Bar */}
+        <header 
+          className="h-16 border-b px-8 flex items-center justify-between shrink-0"
+          style={{ 
+            backgroundColor: 'var(--color-surface-card)', 
+            borderColor: 'var(--color-border)' 
+          }}
+        >
+          <h2 className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+            {selectedItemType === 'app' ? 'Application Settings' : selectedItemType === 'rule' ? 'URL Rule' : 'Welcome'}
           </h2>
-          <div className="flex items-center gap-6">
-            <span className={`flex items-center gap-1.5 text-[13px] font-bold text-success-500 transition-all duration-300 ${saveStatus ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'}`}>
-              <Save size={16} /> Secure Auto-Save Active
+          <div className="flex items-center gap-4">
+            <span 
+              className={`flex items-center gap-1.5 text-[13px] font-bold text-success-500 ${saveStatus ? 'opacity-100' : 'opacity-0'}`}
+              style={{ transition: 'opacity 0.3s ease' }}
+            >
+              <Save size={15} /> Saved
             </span>
             {selectedItemId && (
               <button 
                 onClick={handleDeleteCurrent}
-                className="flex items-center gap-2 bg-white border border-danger-200 text-danger-500 hover:bg-danger-50 hover:border-danger-300 hover:text-danger-600 px-4 py-2 rounded-lg font-bold transition-all cursor-pointer shadow-sm hover:shadow"
+                className="flex items-center gap-2 border text-danger-500 hover:bg-danger-50 px-3.5 py-2 rounded-lg font-bold cursor-pointer text-sm"
+                style={{ borderColor: 'var(--color-danger-200, #FACBCB)' }}
               >
-                <Trash2 size={16} />
-                Drop Node
+                <Trash2 size={15} />
+                Delete
               </button>
             )}
           </div>
         </header>
 
-        {/* Dynamic Editor Pane */}
-        <div className="flex-1 p-10 overflow-y-auto">
+        {/* Editor Content */}
+        <div className="flex-1 p-8 overflow-y-auto">
           {!selectedItemId && (
             <div className="h-full flex items-center justify-center">
-              <div className="text-center p-12 bg-white rounded-2xl border border-dashed border-gray-300">
-                <FolderGit2 size={40} className="mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-bold text-gray-700 mb-2">No Node Selected</h3>
-                <p className="text-[14px] text-gray-500 font-medium">Click "Add Root App" on the sidebar to begin building the payload ruleset.</p>
+              <div 
+                className="text-center p-10 rounded-2xl border border-dashed"
+                style={{ 
+                  backgroundColor: 'var(--color-surface-card)',
+                  borderColor: 'var(--color-border-strong)'
+                }}
+              >
+                <Layers size={40} className="mx-auto mb-4" style={{ color: 'var(--color-text-tertiary)' }} />
+                <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Select an Application</h3>
+                <p className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>Click "Add Application" on the sidebar to get started.</p>
               </div>
             </div>
           )}
 
-          {/* APP EDITOR */}
+          {/* ── APP EDITOR ── */}
           {selectedItemType === 'app' && currentApp && (
-            <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="bg-white p-8 rounded-[20px] shadow-sm border border-gray-100 border-t-4 border-t-primary-500">
-                <div className="mb-8">
-                  <label className="block text-sm font-extrabold text-gray-700 mb-2.5">Application Title Reference</label>
+            <div className="max-w-2xl mx-auto">
+              <div 
+                className="p-7 rounded-2xl shadow-sm border"
+                style={{ 
+                  backgroundColor: 'var(--color-surface-card)',
+                  borderColor: 'var(--color-border)'
+                }}
+              >
+                {/* Top accent bar */}
+                <div className="w-full h-1 bg-primary-400 rounded-full mb-7" />
+
+                <div className="mb-7">
+                  <label className="block text-sm font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>Application Name</label>
                   <input 
                     type="text" 
                     value={currentApp.name} 
                     onChange={(e) => updateAppField(currentApp.id, 'name', e.target.value)}
-                    placeholder="e.g. Identity Management Core"
-                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-[3px] focus:ring-primary-500/20 focus:border-primary-500 hover:border-gray-300 font-semibold text-gray-800 transition-all shadow-sm"
+                    placeholder="e.g. My Login Page"
+                    className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 font-semibold text-[15px]"
+                    style={{ 
+                      backgroundColor: 'var(--color-surface-raised)', 
+                      borderColor: 'var(--color-border)',
+                      color: 'var(--color-text-primary)'
+                    }}
                   />
                 </div>
                 
-                <div className="flex items-center gap-4 bg-gray-50 p-5 rounded-xl border border-gray-200">
-                  <label className="relative inline-flex items-center cursor-pointer disabled:opacity-50">
+                <div 
+                  className="flex items-center gap-4 p-5 rounded-xl border"
+                  style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border-subtle)' }}
+                >
+                  <label className="relative inline-flex items-center cursor-pointer">
                     <input 
                       type="checkbox" 
                       className="sr-only peer" 
                       checked={currentApp.enabled} 
                       onChange={(e) => updateAppField(currentApp.id, 'enabled', e.target.checked)}
                     />
-                    <div className="w-12 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success-500 shadow-inner"></div>
+                    <div className="w-12 h-6 bg-warm-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-warm-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success-500 shadow-inner"></div>
                   </label>
                   <div>
-                    <h4 className="text-[14px] font-extrabold text-gray-800">Master Killswitch Configuration</h4>
-                    <p className="text-[12px] font-medium text-gray-500 mt-0.5">Disable this node to automatically kill all internal active rule instances.</p>
+                    <h4 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>Enable / Disable</h4>
+                    <p className="text-[12px] font-medium mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>When disabled, all URL rules under this application are paused.</p>
                   </div>
                 </div>
 
-                <div className="mt-8 pt-8 border-t border-gray-100 text-right">
+                <div className="mt-7 pt-7 border-t text-right" style={{ borderColor: 'var(--color-border-subtle)' }}>
                   <button 
                     onClick={() => handleAddRule(currentApp.id)}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-50 hover:bg-primary-100 text-primary-700 font-extrabold rounded-xl transition-all cursor-pointer"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-50 hover:bg-primary-100 text-primary-600 font-bold rounded-xl cursor-pointer border border-primary-200"
                   >
-                    <Plus size={18} /> Spawn Target Rule Sub-Node
+                    <Plus size={17} /> Add URL Rule
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* RULE EDITOR */}
+          {/* ── RULE EDITOR ── */}
           {selectedItemType === 'rule' && currentRule && (
-             <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
-               {/* URL Meta Block */}
-               <div className="bg-white p-8 rounded-[20px] shadow-sm border border-gray-100 border-t-4 border-t-primary-500 mb-10 text-left">
-                <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-100">
-                  <h3 className="text-xl font-extrabold text-gray-800">Target Mechanism Constraints</h3>
+            <div className="max-w-3xl mx-auto space-y-6">
+              {/* URL Matching Card */}
+              <div 
+                className="p-7 rounded-2xl shadow-sm border"
+                style={{ 
+                  backgroundColor: 'var(--color-surface-card)',
+                  borderColor: 'var(--color-border)'
+                }}
+              >
+                <div className="w-full h-1 bg-primary-400 rounded-full mb-7" />
+
+                <div className="flex justify-between items-center mb-6 pb-5 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
+                  <h3 className="text-lg font-extrabold" style={{ color: 'var(--color-text-primary)' }}>URL Matching</h3>
                   <div className="flex items-center gap-3">
-                    <span className="text-[13px] font-extrabold text-gray-600">Active Listener</span>
+                    <span className="text-[13px] font-bold" style={{ color: 'var(--color-text-secondary)' }}>Enabled</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" checked={currentRule.enabled} onChange={(e) => updateRuleField(currentRule.id, 'enabled', e.target.checked)}/>
-                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success-500 shadow-inner"></div>
+                      <div className="w-11 h-6 bg-warm-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success-500 shadow-inner"></div>
                     </label>
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-6">
-                  <div className="w-full md:w-56 shrink-0">
-                    <label className="block text-[13px] font-extrabold text-gray-500 mb-2">Evaluator Protocol</label>
+                <div className="flex flex-col md:flex-row gap-5">
+                  <div className="w-full md:w-48 shrink-0">
+                    <label className="block text-[13px] font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>Match Type</label>
                     <select 
                       value={currentRule.matchType}
                       onChange={(e) => updateRuleField(currentRule.id, 'matchType', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-xl focus:outline-none focus:ring-[3px] focus:ring-primary-500/20 focus:border-primary-500 font-bold text-gray-700 transition-colors"
+                      className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 font-bold text-sm"
+                      style={{ 
+                        backgroundColor: 'var(--color-surface-raised)',
+                        borderColor: 'var(--color-border)',
+                        color: 'var(--color-text-primary)'
+                      }}
                     >
-                      <option value="exact">Strict Exact Routing</option>
-                      <option value="startsWith">Loose Starts With</option>
-                      <option value="wildcard">Generic Wildcard (*)</option>
+                      <option value="exact">Exact Match</option>
+                      <option value="startsWith">Starts With</option>
+                      <option value="wildcard">Wildcard (*)</option>
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-[13px] font-extrabold text-gray-500 mb-2">Constraint Expression / Uniform Resource Locator</label>
+                    <label className="block text-[13px] font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>URL Pattern</label>
                     <input 
                       type="text" 
                       value={currentRule.urlPattern}
                       onChange={(e) => updateRuleField(currentRule.id, 'urlPattern', e.target.value)}
-                      placeholder="e.g. http://localhost:*/api/v1/*/auth"
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-xl focus:outline-none focus:ring-[3px] focus:ring-primary-500/20 focus:border-primary-500 font-semibold text-gray-800 transition-all"
+                      placeholder="e.g. http://localhost:3000/login"
+                      className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 font-semibold text-sm"
+                      style={{ 
+                        backgroundColor: 'var(--color-surface-raised)',
+                        borderColor: 'var(--color-border)',
+                        color: 'var(--color-text-primary)'
+                      }}
                     />
                   </div>
                 </div>
-               </div>
+              </div>
 
-               {/* Field Mappings Block */}
-               <div className="bg-white p-8 rounded-[20px] shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
-                   <h3 className="text-xl font-extrabold text-gray-800">Payload Traversal Mappings</h3>
-                   <button 
-                     onClick={() => addFieldMapping(currentRule.id)}
-                     className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-800 font-bold rounded-lg transition-all shadow-sm cursor-pointer"
-                   >
-                     <Plus size={18} className="text-primary-600" /> New Injection Instance
-                   </button>
+              {/* Field Mappings Card */}
+              <div 
+                className="p-7 rounded-2xl shadow-sm border"
+                style={{ 
+                  backgroundColor: 'var(--color-surface-card)',
+                  borderColor: 'var(--color-border)'
+                }}
+              >
+                <div className="flex items-center justify-between mb-6 pb-4 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
+                  <h3 className="text-lg font-extrabold" style={{ color: 'var(--color-text-primary)' }}>Field Mappings</h3>
+                  <button 
+                    onClick={() => addFieldMapping(currentRule.id)}
+                    className="flex items-center gap-1.5 px-4 py-2.5 border font-bold rounded-lg cursor-pointer shadow-sm text-sm"
+                    style={{ 
+                      backgroundColor: 'var(--color-surface-card)',
+                      borderColor: 'var(--color-border)',
+                      color: 'var(--color-text-primary)'
+                    }}
+                  >
+                    <Plus size={17} className="text-primary-500" /> Add Field
+                  </button>
                 </div>
 
                 <div className="space-y-4">
                   {currentRule.fields.length === 0 ? (
-                    <div className="text-center py-10 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                      <Settings2 size={32} className="mx-auto text-gray-300 mb-3" />
-                      <h4 className="text-[15px] font-extrabold text-gray-600 mb-1">No Virtual DOM constraints resolved.</h4>
-                      <p className="text-[14px] text-gray-500 font-medium">Map logic to internal nodes to initiate autofill algorithms.</p>
+                    <div 
+                      className="text-center py-10 rounded-2xl border-2 border-dashed"
+                      style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}
+                    >
+                      <FileText size={32} className="mx-auto mb-3" style={{ color: 'var(--color-text-tertiary)' }} />
+                      <h4 className="text-[15px] font-bold mb-1" style={{ color: 'var(--color-text-secondary)' }}>No fields added yet</h4>
+                      <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Add fields to auto-fill input elements on this page.</p>
                     </div>
                   ) : (
                     currentRule.fields.map((field) => (
-                      <div key={field.id} className="group relative flex flex-col md:flex-row items-center gap-4 p-5 bg-white border border-gray-200 rounded-[14px] hover:border-primary-400 hover:shadow-md transition-all shadow-sm">
-                        
-                        {/* Dynamic Floating ID */}
-                        <div className="absolute -top-2.5 left-4 bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-bold border border-gray-200 hidden md:block">Node_ID: {field.id}</div>
+                      <div 
+                        key={field.id} 
+                        className="group relative flex flex-col md:flex-row items-center gap-4 p-5 border rounded-xl shadow-sm"
+                        style={{ 
+                          backgroundColor: 'var(--color-surface-card)',
+                          borderColor: 'var(--color-border)'
+                        }}
+                      >
+                        {/* Field ID Badge */}
+                        <div 
+                          className="absolute -top-2.5 left-4 px-2 py-0.5 rounded text-[10px] font-bold border hidden md:block font-mono-code"
+                          style={{ 
+                            backgroundColor: 'var(--color-surface-raised)',
+                            borderColor: 'var(--color-border)',
+                            color: 'var(--color-text-tertiary)'
+                          }}
+                        >
+                          ID: {field.id}
+                        </div>
 
+                        {/* Enable toggle */}
                         <div className="flex flex-col items-center gap-1">
                           <label className="relative inline-flex items-center cursor-pointer" title="Enable Field">
                             <input type="checkbox" className="sr-only peer" checked={field.enabled} onChange={(e) => updateMappingField(currentRule.id, field.id, 'enabled', e.target.checked)}/>
-                            <div className="w-[38px] h-[22px] bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-[18px] after:w-[18px] after:transition-all peer-checked:bg-primary-500 shadow-inner"></div>
+                            <div className="w-[38px] h-[22px] bg-warm-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-[18px] after:w-[18px] after:transition-all peer-checked:bg-primary-500 shadow-inner"></div>
                           </label>
                         </div>
 
-                        <div className="flex-1 w-full relative group">
-                          <label className="block text-[11px] uppercase tracking-wider font-extrabold text-gray-400 mb-1.5">CSS / XPath Traverser</label>
-                          <input type="text" value={field.selector} onChange={(e) => updateMappingField(currentRule.id, field.id, 'selector', e.target.value)} placeholder="#username or //div/input" className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-[3px] focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none font-semibold text-[14px] font-mono text-gray-700 transition-colors"/>
-                        </div>
-
+                        {/* Selector */}
                         <div className="flex-1 w-full">
-                          <label className="block text-[11px] uppercase tracking-wider font-extrabold text-gray-400 mb-1.5">Static Text Injection Payload</label>
-                          <input type="text" value={field.content} onChange={(e) => updateMappingField(currentRule.id, field.id, 'content', e.target.value)} placeholder="Type simulation data..." className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-[3px] focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none font-semibold text-[14px] font-mono text-primary-700 transition-colors"/>
+                          <label className="block text-[11px] uppercase tracking-wider font-bold mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>Selector</label>
+                          <input 
+                            type="text" 
+                            value={field.selector} 
+                            onChange={(e) => updateMappingField(currentRule.id, field.id, 'selector', e.target.value)} 
+                            placeholder="#username or //div/input" 
+                            className="w-full px-3.5 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none font-semibold text-sm font-mono-code"
+                            style={{ 
+                              backgroundColor: 'var(--color-surface-raised)',
+                              borderColor: 'var(--color-border)',
+                              color: 'var(--color-text-primary)'
+                            }}
+                          />
                         </div>
 
-                        <div className="flex items-center justify-center shrink-0 w-max pt-6">
-                          <label className="flex items-center justify-center gap-2 cursor-pointer bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors shadow-sm">
-                            <input type="checkbox" checked={field.appendTimestamp} onChange={(e) => updateMappingField(currentRule.id, field.id, 'appendTimestamp', e.target.checked)} className="w-[18px] h-[18px] cursor-pointer text-primary-600 rounded focus:ring-primary-500 accent-primary-600"/>
-                            <span className="text-[13px] font-extrabold text-gray-700">Timestamp</span>
+                        {/* Fill Value */}
+                        <div className="flex-1 w-full">
+                          <label className="block text-[11px] uppercase tracking-wider font-bold mb-1.5" style={{ color: 'var(--color-text-tertiary)' }}>Fill Value</label>
+                          <input 
+                            type="text" 
+                            value={field.content} 
+                            onChange={(e) => updateMappingField(currentRule.id, field.id, 'content', e.target.value)} 
+                            placeholder="Value to fill..." 
+                            className="w-full px-3.5 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none font-semibold text-sm font-mono-code"
+                            style={{ 
+                              backgroundColor: 'var(--color-surface-raised)',
+                              borderColor: 'var(--color-border)',
+                              color: 'var(--color-text-primary)'
+                            }}
+                          />
+                        </div>
+
+                        {/* Timestamp checkbox */}
+                        <div className="flex items-center justify-center shrink-0 w-max pt-5">
+                          <label 
+                            className="flex items-center justify-center gap-2 cursor-pointer px-3 py-2.5 rounded-lg border shadow-sm"
+                            style={{ 
+                              backgroundColor: 'var(--color-surface-raised)',
+                              borderColor: 'var(--color-border)'
+                            }}
+                          >
+                            <input 
+                              type="checkbox" 
+                              checked={field.appendTimestamp} 
+                              onChange={(e) => updateMappingField(currentRule.id, field.id, 'appendTimestamp', e.target.checked)} 
+                              className="w-[18px] h-[18px] cursor-pointer rounded accent-primary-500"
+                            />
+                            <span className="text-[13px] font-bold" style={{ color: 'var(--color-text-primary)' }}>Timestamp</span>
                           </label>
                         </div>
 
-                        <div className="pt-6">
-                          <button onClick={() => deleteMapping(currentRule.id, field.id)} className="p-2.5 bg-white border border-gray-200 text-gray-400 hover:bg-danger-50 hover:border-danger-200 hover:text-danger-600 rounded-lg transition-colors cursor-pointer shadow-sm" title="Eradicate Node Mapping">
+                        {/* Delete field */}
+                        <div className="pt-5">
+                          <button 
+                            onClick={() => deleteMapping(currentRule.id, field.id)} 
+                            className="p-2.5 border text-danger-400 hover:bg-danger-50 hover:border-danger-200 hover:text-danger-600 rounded-lg cursor-pointer shadow-sm"
+                            style={{ borderColor: 'var(--color-border)' }}
+                            title="Remove Field"
+                          >
                             <XSquare size={20} />
                           </button>
                         </div>
@@ -777,8 +1148,8 @@ export default function Options() {
                     ))
                   )}
                 </div>
-               </div>
-             </div>
+              </div>
+            </div>
           )}
         </div>
       </main>
