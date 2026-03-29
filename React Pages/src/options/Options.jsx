@@ -892,7 +892,6 @@ export default function Options() {
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
           </div>
-          <p className="text-[13px] font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Settings</p>
 
           {/* Utility Row */}
           <div className="flex gap-2 mt-4">
@@ -1305,10 +1304,10 @@ export default function Options() {
                         </div>
 
                         {/* Enable toggle */}
-                        <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center justify-center shrink-0 w-max pt-5">
                           <label className="relative inline-flex items-center cursor-pointer" title="Enable Field">
                             <input type="checkbox" className="sr-only peer" checked={field.enabled} onChange={(e) => updateMappingField(currentRule.id, field.id, 'enabled', e.target.checked)}/>
-                            <div className="w-[38px] h-[22px] bg-warm-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-[18px] after:w-[18px] after:transition-all peer-checked:bg-primary-500 shadow-inner"></div>
+                            <div className="w-[48px] h-[28px] bg-warm-300 dark:bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[20px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-[24px] after:w-[24px] after:transition-all peer-checked:bg-primary-500 shadow-inner"></div>
                           </label>
                         </div>
 

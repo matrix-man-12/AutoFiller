@@ -221,8 +221,8 @@ export default function Help() {
               <div className="flex justify-center mb-3 text-primary-500"><Keyboard size={28} /></div>
               <p className="font-extrabold text-[15px]" style={{ color: 'var(--color-text-primary)' }}>Inject Routine</p>
               <div className="flex items-center justify-center gap-2 font-mono-code text-sm font-bold opacity-80" style={{ color: 'var(--color-text-secondary)' }}>
-                <kbd className="px-2.5 py-1.5 border rounded-lg bg-surface shadow-sm">Ctrl</kbd> +
-                <kbd className="px-2.5 py-1.5 border rounded-lg bg-surface shadow-sm">Space</kbd>
+                <kbd className="px-2.5 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">Alt</kbd> +
+                <kbd className="px-3 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">A</kbd>
               </div>
             </div>
             <div
@@ -232,9 +232,8 @@ export default function Help() {
               <div className="flex justify-center mb-3 text-danger-400"><Trash2 size={28} /></div>
               <p className="font-extrabold text-[15px]" style={{ color: 'var(--color-text-primary)' }}>Wipe Sequence</p>
               <div className="flex items-center justify-center gap-2 font-mono-code text-sm font-bold opacity-80" style={{ color: 'var(--color-text-secondary)' }}>
-                <kbd className="px-2 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">Ctrl</kbd> +
-                <kbd className="px-2 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">Shift</kbd> +
-                <kbd className="px-2 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">Space</kbd>
+                <kbd className="px-2.5 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">Alt</kbd> +
+                <kbd className="px-3 py-1.5 border rounded-lg bg-surface shadow-sm text-xs">S</kbd>
               </div>
             </div>
           </div>

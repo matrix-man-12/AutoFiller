@@ -22,15 +22,15 @@
   "commands": {
     "autofill-now": {
       "suggested_key": {
-        "default": "Ctrl+Space",
-        "mac": "Command+Space"
+        "default": "Alt+A",
+        "mac": "Alt+A"
       },
       "description": "Trigger AutoFill on the current page."
     },
     "autoclear-now": {
       "suggested_key": {
-        "default": "Ctrl+Shift+Space",
-        "mac": "Command+Shift+Space"
+        "default": "Alt+S",
+        "mac": "Alt+S"
       },
       "description": "Clear AutoFilled fields on the current page."
     }
