@@ -20,7 +20,10 @@ import {
   Moon,
   Globe,
   Layers,
-  FileText
+  FileText,
+  ToggleLeft,
+  ToggleRight,
+  Copy
 } from 'lucide-react';
 
 const generateId = (prefix) => `${prefix}_${Math.random().toString(36).substr(2, 9)}`;
@@ -403,7 +406,16 @@ export default function Options() {
     async function initLoader() {
       if (typeof window.chrome !== 'undefined' && chrome.storage) {
         const result = await chrome.storage.local.get('apps');
-        if (result.apps) setApps(result.apps);
+        if (result.apps) {
+          const migratedApps = result.apps.map(app => ({
+            ...app,
+            rules: app.rules.map(rule => ({
+              ...rule,
+              urlPatterns: rule.urlPatterns || (rule.urlPattern ? [{id: generateId('url'), value: rule.urlPattern}] : [{id: generateId('url'), value: ''}])
+            }))
+          }));
+          setApps(migratedApps);
+        }
       } else {
         console.warn("Dev mode: Standard initial data.");
       }
@@ -533,7 +545,7 @@ export default function Options() {
 
     const newRule = {
       id: generateId('rule'),
-      urlPattern: '',
+      urlPatterns: [{ id: generateId('url'), value: '' }],
       matchType: 'wildcard',
       enabled: true,
       fields: []
@@ -564,6 +576,47 @@ export default function Options() {
       if (r) {
         r[field] = value;
         persistData(cloned);
+        return;
+      }
+    }
+  };
+
+  const updateUrlPatternField = (ruleId, urlId, value) => {
+    const cloned = [...apps];
+    for (let a of cloned) {
+      const r = a.rules.find(rx => rx.id === ruleId);
+      if (r) {
+        const u = r.urlPatterns.find(p => p.id === urlId);
+        if (u) {
+          u.value = value;
+          persistData(cloned);
+          return;
+        }
+      }
+    }
+  };
+
+  const addUrlPattern = (ruleId) => {
+    const cloned = [...apps];
+    for (let a of cloned) {
+      const r = a.rules.find(rx => rx.id === ruleId);
+      if (r) {
+        r.urlPatterns.push({ id: generateId('url'), value: '' });
+        persistData(cloned);
+        return;
+      }
+    }
+  };
+
+  const removeUrlPattern = (ruleId, urlId) => {
+    const cloned = [...apps];
+    for (let a of cloned) {
+      const r = a.rules.find(rx => rx.id === ruleId);
+      if (r) {
+        if (r.urlPatterns.length > 1) {
+          r.urlPatterns = r.urlPatterns.filter(p => p.id !== urlId);
+          persistData(cloned);
+        }
         return;
       }
     }
@@ -621,10 +674,31 @@ export default function Options() {
     });
   };
 
+  const handleDuplicateRule = () => {
+    const cloned = [...apps];
+    for (let a of cloned) {
+      const ruleIndex = a.rules.findIndex(rx => rx.id === selectedItemId);
+      if (ruleIndex !== -1) {
+        const sourceRule = a.rules[ruleIndex];
+        const newRule = {
+          ...sourceRule,
+          id: generateId('rule'),
+          urlPatterns: sourceRule.urlPatterns.map(p => ({ ...p, id: generateId('url') })),
+          fields: sourceRule.fields.map(f => ({ ...f, id: generateId('field') }))
+        };
+        a.rules.push(newRule);
+        persistData(cloned);
+        setSelectedItemType('rule');
+        setSelectedItemId(newRule.id);
+        break;
+      }
+    }
+  };
+
   const handleDeleteCurrent = () => {
     const itemName = selectedItemType === 'app' 
       ? (currentApp?.name || 'this application')
-      : (currentRule?.urlPattern || 'this URL rule');
+      : ((currentRule?.urlPatterns && currentRule.urlPatterns[0]?.value) || currentRule?.urlPattern || 'this URL rule');
     
     setDeleteModal({
       title: selectedItemType === 'app' ? 'Delete Application' : 'Delete URL Rule',
@@ -827,7 +901,7 @@ export default function Options() {
                   >
                     <div className="flex items-center gap-2 text-[12px] font-semibold truncate min-w-0">
                       <Globe size={13} className={selectedItemType === 'rule' && selectedItemId === r.id ? 'text-primary-500' : ''} style={selectedItemType === 'rule' && selectedItemId === r.id ? {} : { color: 'var(--color-text-tertiary)' }} />
-                      <span className="truncate">{r.urlPattern || 'New Rule'}</span>
+                      <span className="truncate">{(r.urlPatterns && r.urlPatterns[0]?.value) || r.urlPattern || 'New Rule'}</span>
                     </div>
                     <span 
                       className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
@@ -865,11 +939,25 @@ export default function Options() {
             >
               <Save size={15} /> Saved
             </span>
+            {selectedItemType === 'rule' && selectedItemId && (
+              <button 
+                onClick={handleDuplicateRule}
+                className="flex items-center gap-2 border text-gray-700 hover:bg-gray-50 px-3.5 py-2 rounded-lg font-bold cursor-pointer text-sm"
+                style={{ 
+                  backgroundColor: 'var(--color-surface-card)', 
+                  borderColor: 'var(--color-border)',
+                  color: 'var(--color-text-primary)'
+                }}
+              >
+                <Copy size={15} style={{ color: 'var(--color-text-secondary)' }} />
+                Duplicate
+              </button>
+            )}
             {selectedItemId && (
               <button 
                 onClick={handleDeleteCurrent}
                 className="flex items-center gap-2 border text-danger-500 hover:bg-danger-50 px-3.5 py-2 rounded-lg font-bold cursor-pointer text-sm"
-                style={{ borderColor: 'var(--color-danger-200, #FACBCB)' }}
+                style={{ borderColor: 'var(--color-danger-200)' }}
               >
                 <Trash2 size={15} />
                 Delete
@@ -998,20 +1086,45 @@ export default function Options() {
                       <option value="wildcard">Wildcard (*)</option>
                     </select>
                   </div>
-                  <div className="flex-1">
-                    <label className="block text-[13px] font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>URL Pattern</label>
-                    <input 
-                      type="text" 
-                      value={currentRule.urlPattern}
-                      onChange={(e) => updateRuleField(currentRule.id, 'urlPattern', e.target.value)}
-                      placeholder="e.g. http://localhost:3000/login"
-                      className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 font-semibold text-sm"
+                  <div className="flex-1 space-y-3">
+                    <label className="block text-[13px] font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>URL Patterns</label>
+                    {(currentRule.urlPatterns || []).map((pattern, index) => (
+                      <div key={pattern.id} className="flex items-center gap-3">
+                        <input 
+                          type="text" 
+                          value={pattern.value}
+                          onChange={(e) => updateUrlPatternField(currentRule.id, pattern.id, e.target.value)}
+                          placeholder="e.g. http://localhost:3000/login"
+                          className="flex-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 font-semibold text-sm"
+                          style={{ 
+                            backgroundColor: 'var(--color-surface-raised)',
+                            borderColor: 'var(--color-border)',
+                            color: 'var(--color-text-primary)'
+                          }}
+                        />
+                        {(currentRule.urlPatterns || []).length > 1 && (
+                          <button 
+                            onClick={() => removeUrlPattern(currentRule.id, pattern.id)}
+                            className="p-2 border rounded-full text-danger-400 hover:bg-danger-50 hover:border-danger-200 hover:text-danger-600 cursor-pointer shadow-sm transition-colors shrink-0"
+                            style={{ borderColor: 'var(--color-border)' }}
+                            title="Remove Pattern"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button 
+                      onClick={() => addUrlPattern(currentRule.id)}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 border font-bold rounded-lg cursor-pointer shadow-sm text-xs"
                       style={{ 
-                        backgroundColor: 'var(--color-surface-raised)',
+                        backgroundColor: 'var(--color-surface-card)',
                         borderColor: 'var(--color-border)',
-                        color: 'var(--color-text-primary)'
+                        color: 'var(--color-text-secondary)'
                       }}
-                    />
+                    >
+                      <Plus size={14} className="text-primary-500" /> Add URL Pattern
+                    </button>
                   </div>
                 </div>
               </div>

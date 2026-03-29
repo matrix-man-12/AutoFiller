@@ -25,7 +25,10 @@ if (typeof window.hasAutoFillerListener === 'undefined') {
       app.rules.forEach(rule => {
         if (!rule.enabled) return;
 
-        if (isMatch(currentUrl, rule.urlPattern, rule.matchType)) {
+        const patterns = rule.urlPatterns ? rule.urlPatterns.map(p => p.value) : [rule.urlPattern];
+        const isMatched = patterns.some(pattern => isMatch(currentUrl, pattern, rule.matchType));
+
+        if (isMatched) {
           rule.fields.forEach(field => {
             if (!field.enabled) return;
 
@@ -69,7 +72,10 @@ if (typeof window.hasAutoFillerListener === 'undefined') {
       app.rules.forEach(rule => {
         if (!rule.enabled) return;
 
-        if (isMatch(currentUrl, rule.urlPattern, rule.matchType)) {
+        const patterns = rule.urlPatterns ? rule.urlPatterns.map(p => p.value) : [rule.urlPattern];
+        const isMatched = patterns.some(pattern => isMatch(currentUrl, pattern, rule.matchType));
+
+        if (isMatched) {
           rule.fields.forEach(field => {
             if (!field.enabled) return;
 
