@@ -683,7 +683,11 @@ export default function Options() {
         const newRule = {
           ...sourceRule,
           id: generateId('rule'),
-          urlPatterns: sourceRule.urlPatterns.map(p => ({ ...p, id: generateId('url') })),
+          urlPatterns: sourceRule.urlPatterns.map((p, index) => ({ 
+            ...p, 
+            id: generateId('url'),
+            value: index === 0 ? (p.value ? `(Copy) ${p.value}` : '(Copy)') : p.value
+          })),
           fields: sourceRule.fields.map(f => ({ ...f, id: generateId('field') }))
         };
         a.rules.push(newRule);
@@ -691,6 +695,32 @@ export default function Options() {
         setSelectedItemType('rule');
         setSelectedItemId(newRule.id);
         break;
+      }
+    }
+  };
+
+  const handleMoveRule = (ruleId, newAppId) => {
+    const cloned = [...apps];
+    let sourceAppIndex = -1;
+    let ruleIndex = -1;
+    let sourceRule = null;
+
+    for (let i = 0; i < cloned.length; i++) {
+      const idx = cloned[i].rules.findIndex(rx => rx.id === ruleId);
+      if (idx !== -1) {
+        sourceAppIndex = i;
+        ruleIndex = idx;
+        sourceRule = cloned[i].rules[idx];
+        break;
+      }
+    }
+
+    if (sourceAppIndex !== -1 && cloned[sourceAppIndex].id !== newAppId && sourceRule) {
+      const targetApp = cloned.find(a => a.id === newAppId);
+      if (targetApp) {
+        cloned[sourceAppIndex].rules.splice(ruleIndex, 1);
+        targetApp.rules.push(sourceRule);
+        persistData(cloned);
       }
     }
   };
@@ -800,12 +830,7 @@ export default function Options() {
             <button
               onClick={() => importInputRef.current?.click()}
               title="Import settings from a JSON file"
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border"
-              style={{ 
-                backgroundColor: 'var(--color-surface-raised)', 
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text-primary)'
-              }}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border border-primary-200 bg-primary-50 text-primary-600"
             >
               <Download size={13} />
               Import
@@ -1068,7 +1093,28 @@ export default function Options() {
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-5">
+                <div className="flex flex-col gap-6">
+                  {/* Parent Application UI */}
+                  <div>
+                    <label className="block text-[13px] font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>Parent Application</label>
+                    <select 
+                      value={apps.find(a => a.rules.some(r => r.id === currentRule.id))?.id || ''}
+                      onChange={(e) => handleMoveRule(currentRule.id, e.target.value)}
+                      className="w-full md:w-1/2 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 font-bold text-sm"
+                      style={{ 
+                        backgroundColor: 'var(--color-surface-raised)',
+                        borderColor: 'var(--color-border)',
+                        color: 'var(--color-text-primary)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {apps.map(app => (
+                        <option key={app.id} value={app.id}>{app.name || 'Unnamed Application'}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-5">
                   <div className="w-full md:w-48 shrink-0">
                     <label className="block text-[13px] font-bold mb-2" style={{ color: 'var(--color-text-secondary)' }}>Match Type</label>
                     <select 
@@ -1128,6 +1174,7 @@ export default function Options() {
                   </div>
                 </div>
               </div>
+            </div>
 
               {/* Field Mappings Card */}
               <div 
