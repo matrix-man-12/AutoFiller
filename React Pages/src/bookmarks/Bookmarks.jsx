@@ -121,6 +121,7 @@ function BookmarkModal({ bookmark, onSave, onClose }) {
   const isEdit = !!bookmark?.id;
 
   const addTag = () => {
+    if (tags.length >= 8) return;
     const t = tagInput.trim().toLowerCase();
     if (t && !tags.includes(t)) { setTags(prev => [...prev, t]); setTagInput(''); }
   };
@@ -185,8 +186,8 @@ function BookmarkModal({ bookmark, onSave, onClose }) {
               </div>
             )}
             <div className="flex gap-2">
-              <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} placeholder="Add a tag…" className="flex-1 px-3 py-2 border rounded-lg text-[13px] font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400" style={inputStyle} />
-              <button onClick={addTag} disabled={!tagInput.trim()} className="px-3 py-2 bg-primary-50 text-primary-600 border border-primary-200 rounded-lg font-bold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"><Plus size={14} /></button>
+              <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} disabled={tags.length >= 8} placeholder={tags.length >= 8 ? "Maximum 8 tags reached" : "Add a tag…"} className="flex-1 px-3 py-2 border rounded-lg text-[13px] font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 disabled:opacity-50 disabled:cursor-not-allowed" style={inputStyle} />
+              <button onClick={addTag} disabled={!tagInput.trim() || tags.length >= 8} className="px-3 py-2 bg-primary-50 text-primary-600 border border-primary-200 rounded-lg font-bold text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"><Plus size={14} /></button>
             </div>
           </div>
         </div>

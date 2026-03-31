@@ -334,8 +334,12 @@ function TaskModal({ task, onSave, onClose }) {
             <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="What needs to be done?" className={inputCls} style={inputStyle} />
           </div>
 
-          <div className="flex gap-3">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[12px] font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>Due Date</label>
+              <DatePicker value={dueDate} onChange={setDueDate} />
+            </div>
+            <div>
               <label className="block text-[12px] font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>Priority</label>
               <CustomSelect
                 value={priority}
@@ -349,7 +353,7 @@ function TaskModal({ task, onSave, onClose }) {
                 )}
               />
             </div>
-            <div className="flex-1">
+            <div>
               <label className="block text-[12px] font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>Status</label>
               <CustomSelect
                 value={status}
@@ -369,11 +373,6 @@ function TaskModal({ task, onSave, onClose }) {
           </div>
 
           <div>
-            <label className="block text-[12px] font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>Due Date</label>
-            <DatePicker value={dueDate} onChange={setDueDate} />
-          </div>
-
-          <div>
             <label className="block text-[12px] font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>Notes / Reminder</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Add notes, reminders, details…" rows={3} className={`${inputCls} resize-none`} style={inputStyle} />
           </div>
@@ -381,26 +380,7 @@ function TaskModal({ task, onSave, onClose }) {
           {/* Subtasks */}
           <div>
             <label className="block text-[12px] font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>Subtasks ({subtasks.length})</label>
-            <div className="space-y-2 mb-3">
-              {subtasks.map((sub, idx) => (
-                <div key={sub.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border-subtle)' }}>
-                  <button onClick={() => setSubtasks(prev => prev.map((s, i) => i === idx ? { ...s, done: !s.done } : s))} className="cursor-pointer shrink-0">
-                    {sub.done ? <CheckCircle2 size={16} className="text-success-500" /> : <Circle size={16} style={{ color: 'var(--color-text-tertiary)' }} />}
-                  </button>
-                  <input
-                    type="text"
-                    value={sub.title}
-                    onChange={e => setSubtasks(prev => prev.map((s, i) => i === idx ? { ...s, title: e.target.value } : s))}
-                    className={`flex-1 bg-transparent outline-none text-[13px] font-semibold ${sub.done ? 'line-through opacity-60' : ''}`}
-                    style={{ color: 'var(--color-text-primary)' }}
-                  />
-                  <button onClick={() => setSubtasks(prev => prev.filter((_, i) => i !== idx))} className="p-1 cursor-pointer shrink-0 text-danger-400 hover:text-danger-600">
-                    <X size={13} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-3">
               <input
                 type="text"
                 value={newSubtask}
@@ -414,11 +394,32 @@ function TaskModal({ task, onSave, onClose }) {
                 <Plus size={14} />
               </button>
             </div>
+            {subtasks.length > 0 && (
+              <div className="space-y-2">
+                {subtasks.map((sub, idx) => (
+                  <div key={sub.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border-subtle)' }}>
+                    <button onClick={() => setSubtasks(prev => prev.map((s, i) => i === idx ? { ...s, done: !s.done } : s))} className="cursor-pointer shrink-0">
+                      {sub.done ? <CheckCircle2 size={16} className="text-success-500" /> : <Circle size={16} style={{ color: 'var(--color-text-tertiary)' }} />}
+                    </button>
+                    <input
+                      type="text"
+                      value={sub.title}
+                      onChange={e => setSubtasks(prev => prev.map((s, i) => i === idx ? { ...s, title: e.target.value } : s))}
+                      className={`flex-1 bg-transparent outline-none text-[13px] font-semibold ${sub.done ? 'line-through opacity-60' : ''}`}
+                      style={{ color: 'var(--color-text-primary)' }}
+                    />
+                    <button onClick={() => setSubtasks(prev => prev.filter((_, i) => i !== idx))} className="p-1 cursor-pointer shrink-0 text-danger-400 hover:text-danger-600">
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: 'var(--color-border-subtle)', backgroundColor: 'var(--color-surface-raised)' }}>
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t rounded-b-2xl" style={{ borderColor: 'var(--color-border-subtle)', backgroundColor: 'var(--color-surface-raised)' }}>
           <button onClick={onClose} className="px-5 py-2.5 text-[13px] font-bold rounded-xl border cursor-pointer" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}>Cancel</button>
           <button onClick={handleSave} disabled={!title.trim()} className="flex items-center gap-2 px-5 py-2.5 text-[13px] font-bold text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl cursor-pointer shadow-sm">
             <ListTodo size={15} />
