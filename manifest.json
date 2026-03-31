@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Super X",
+  "name": "SuperX",
   "version": "2.0.0",
   "description": "Developer productivity suite — AutoFiller, Bookmark Manager, and Task Tracker in one extension.",
   "permissions": [

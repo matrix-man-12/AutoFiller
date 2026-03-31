@@ -170,7 +170,7 @@ export default function Popup() {
       <div className="px-5 pt-5 pb-4 border-b" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border-subtle)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-extrabold tracking-tight text-primary-500 leading-none">Super X</h2>
+            <h2 className="text-lg font-extrabold tracking-tight text-primary-500 leading-none">SuperX</h2>
             <p className="text-[11px] font-semibold mt-1" style={{ color: 'var(--color-text-tertiary)' }}>Quick Actions</p>
           </div>
           <button onClick={toggleTheme} className="p-2 rounded-lg cursor-pointer" style={{ color: 'var(--color-text-secondary)' }} title={theme === 'light' ? 'Dark mode' : 'Light mode'}>

@@ -887,7 +887,7 @@ export default function Options() {
         >
           <div className="flex items-center justify-between mb-1">
             <h1 className="text-xl font-extrabold tracking-tight text-primary-500">AutoFiller</h1>
-            <p className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>Super X</p>
+            <p className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>SuperX</p>
             <button 
               onClick={toggleTheme}
               className="p-2 rounded-lg cursor-pointer"
@@ -895,33 +895,6 @@ export default function Options() {
               title={theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
             >
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-            </button>
-          </div>
-
-          {/* Utility Row */}
-          <div className="flex gap-2 mt-4">
-            <a 
-              href="help.html" 
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 py-2 px-3 text-primary-600 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 hover:border-primary-300 bg-primary-50"
-            >
-              <ExternalLink size={13} /> Docs
-            </a>
-            <button
-              onClick={() => importInputRef.current?.click()}
-              title="Import settings from a JSON file"
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border border-primary-200 bg-primary-50 text-primary-600"
-            >
-              <Download size={13} />
-              Import
-            </button>
-            <button
-              onClick={() => setShowExportModal(true)}
-              disabled={apps.length === 0}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border border-primary-200 bg-primary-50 text-primary-600"
-            >
-              <Upload size={13} />
-              Export
             </button>
           </div>
         </div>
@@ -1045,6 +1018,25 @@ export default function Options() {
             <a href="help.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
               <HelpCircle size={14} style={{ color: 'var(--color-text-tertiary)' }} /> Help & Docs
             </a>
+          </div>
+        </div>
+
+        {/* Import / Export at bottom */}
+        <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+          <div className="flex gap-2">
+            <button
+              onClick={() => importInputRef.current?.click()}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600"
+            >
+              <Download size={13} /> Import
+            </button>
+            <button
+              onClick={() => setShowExportModal(true)}
+              disabled={apps.length === 0}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Upload size={13} /> Export
+            </button>
           </div>
         </div>
       </aside>

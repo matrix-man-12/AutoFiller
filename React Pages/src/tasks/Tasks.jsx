@@ -191,7 +191,7 @@ function DatePicker({ value, onChange }) {
         )}
       </div>
       {isOpen && (
-        <div className="absolute z-30 mt-1.5 p-4 rounded-xl border shadow-xl w-72" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
+        <div className="absolute z-30 bottom-full mb-1.5 p-4 rounded-xl border shadow-xl w-72" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
           {/* Month/Year nav */}
           <div className="flex items-center justify-between mb-3">
             <button onClick={prevMonth} className="p-1.5 rounded-lg cursor-pointer hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}><ChevronLeft size={16} /></button>
@@ -702,6 +702,61 @@ export default function Tasks() {
     e.target.value = '';
   };
 
+  // Import (also handles combined JSON)
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+
+        // If it's a combined export, import ALL data across all features
+        if (parsed.exportType === 'full') {
+          if (typeof window.chrome !== 'undefined' && chrome.storage) {
+            const result = await chrome.storage.local.get(['apps', 'bookmarks', 'tasks']);
+            const updates = {};
+            let parts = [];
+            if (parsed.apps?.length) {
+              const existing = result.apps || [];
+              const ids = new Set(existing.map(a => a.id));
+              const newItems = parsed.apps.filter(a => !ids.has(a.id));
+              if (newItems.length) { updates.apps = [...existing, ...newItems]; parts.push(`${newItems.length} app(s)`); }
+            }
+            if (parsed.bookmarks?.length) {
+              const existing = result.bookmarks || [];
+              const ids = new Set(existing.map(b => b.id));
+              const newItems = parsed.bookmarks.filter(b => !ids.has(b.id));
+              if (newItems.length) { updates.bookmarks = [...existing, ...newItems]; parts.push(`${newItems.length} bookmark(s)`); }
+            }
+            if (parsed.tasks?.length) {
+              const existing = result.tasks || [];
+              const ids = new Set(existing.map(t => t.id));
+              const newItems = parsed.tasks.filter(t => !ids.has(t.id));
+              if (newItems.length) { updates.tasks = [...existing, ...newItems]; parts.push(`${newItems.length} task(s)`); }
+            }
+            if (Object.keys(updates).length) {
+              await chrome.storage.local.set(updates);
+              if (updates.tasks) setTasks(updates.tasks);
+              setToast({ message: `Imported: ${parts.join(', ')}.`, type: 'success' });
+            } else {
+              setToast({ message: 'Everything already exists.', type: 'warn' });
+            }
+          }
+          e.target.value = '';
+          return;
+        }
+
+        // Tasks-only import (fallback to handleImport)
+        handleImport(e);
+      } catch {
+        setToast({ message: 'Invalid JSON file.', type: 'warn' });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   if (loading) return null;
 
   return (
@@ -713,24 +768,16 @@ export default function Tasks() {
       {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
 
       {/* ── Sidebar ── */}
-      <aside className="w-64 flex flex-col border-r shrink-0 z-10 relative" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
+      <aside className="w-72 flex flex-col border-r shrink-0 z-10 relative" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
         {/* Brand */}
-        <div className="px-4 pt-5 pb-4 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
-          <div className="flex items-center justify-between mb-3">
+        <div className="px-5 pt-6 pb-5 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
+          <div className="flex items-center justify-between mb-1">
             <div>
-              <h1 className="text-lg font-extrabold tracking-tight text-primary-500">Tasks</h1>
-              <p className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>Super X</p>
+              <h1 className="text-xl font-extrabold tracking-tight text-primary-500">Tasks</h1>
+              <p className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>SuperX</p>
             </div>
             <button onClick={toggleTheme} className="p-2 rounded-lg cursor-pointer" style={{ color: 'var(--color-text-secondary)' }}>
               {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-            </button>
-          </div>
-          <div className="flex gap-1.5">
-            <button onClick={() => importRef.current?.click()} className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 text-[10px] font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
-              <Download size={11} /> Import
-            </button>
-            <button onClick={handleExport} disabled={tasks.length === 0} className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 text-[10px] font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed">
-              <Upload size={11} /> Export
             </button>
           </div>
         </div>
@@ -819,6 +866,18 @@ export default function Tasks() {
 
         {/* Cross-page nav */}
         <CrossPageNav current="tasks" />
+
+        {/* Import / Export at bottom */}
+        <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+          <div className="flex gap-2">
+            <button onClick={() => importRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
+              <Download size={13} /> Import
+            </button>
+            <button onClick={handleExport} disabled={tasks.length === 0} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed">
+              <Upload size={13} /> Export
+            </button>
+          </div>
+        </div>
       </aside>
 
       {/* ── Main ── */}
