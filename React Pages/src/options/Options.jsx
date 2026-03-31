@@ -886,8 +886,10 @@ export default function Options() {
           style={{ borderColor: 'var(--color-border-subtle)' }}
         >
           <div className="flex items-center justify-between mb-1">
-            <h1 className="text-xl font-extrabold tracking-tight text-primary-500">AutoFiller</h1>
-            <p className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>SuperX</p>
+            <div>
+              <h1 className="text-xl font-extrabold tracking-tight text-primary-500">AutoFiller</h1>
+              <p className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>SuperX</p>
+            </div>
             <button 
               onClick={toggleTheme}
               className="p-2 rounded-lg cursor-pointer"
@@ -896,6 +898,19 @@ export default function Options() {
             >
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
+          </div>
+
+          {/* Quick Nav (3 horizontal icons) */}
+          <div className="flex gap-1.5 mt-3">
+            <a href="bookmarks.html" title="Bookmarks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <Bookmark size={15} />
+            </a>
+            <a href="tasks.html" title="Tasks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <ListTodo size={15} />
+            </a>
+            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <HelpCircle size={15} />
+            </a>
           </div>
         </div>
 
@@ -1005,21 +1020,7 @@ export default function Options() {
           )}
         </div>
 
-        {/* Cross-page navigation */}
-        <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-          <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-text-tertiary)' }}>Navigate</h4>
-          <div className="space-y-1">
-            <a href="bookmarks.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
-              <Bookmark size={14} className="text-primary-500" /> Bookmarks
-            </a>
-            <a href="tasks.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
-              <ListTodo size={14} className="text-primary-500" /> Tasks
-            </a>
-            <a href="help.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
-              <HelpCircle size={14} style={{ color: 'var(--color-text-tertiary)' }} /> Help & Docs
-            </a>
-          </div>
-        </div>
+        {/* Nav removed from here */}
 
         {/* Import / Export at bottom */}
         <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>

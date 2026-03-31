@@ -191,7 +191,7 @@ function DatePicker({ value, onChange }) {
         )}
       </div>
       {isOpen && (
-        <div className="absolute z-30 bottom-full mb-1.5 p-4 rounded-xl border shadow-xl w-72" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
+        <div className="absolute z-30 top-full mt-1.5 p-4 rounded-xl border shadow-xl w-72" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
           {/* Month/Year nav */}
           <div className="flex items-center justify-between mb-3">
             <button onClick={prevMonth} className="p-1.5 rounded-lg cursor-pointer hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}><ChevronLeft size={16} /></button>
@@ -313,10 +313,10 @@ function TaskModal({ task, onSave, onClose }) {
   const inputStyle = { backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'var(--color-surface-overlay)' }} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col overflow-hidden border" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-10 px-4" style={{ backgroundColor: 'var(--color-surface-overlay)' }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="rounded-2xl shadow-2xl w-full max-w-lg mx-auto flex flex-col border relative" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
+        <div className="flex items-center justify-between px-6 py-5 border-b rounded-t-2xl" style={{ borderColor: 'var(--color-border-subtle)', backgroundColor: 'var(--color-surface-card)' }}>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary-50 rounded-xl"><ListTodo size={18} className="text-primary-600" /></div>
             <div>
@@ -324,11 +324,11 @@ function TaskModal({ task, onSave, onClose }) {
               <p className="text-xs font-medium mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>{isEdit ? 'Update task details' : 'Create a new task to track'}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg cursor-pointer" style={{ color: 'var(--color-text-tertiary)' }}><X size={18} /></button>
+          <button onClick={onClose} className="p-2 rounded-lg cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" style={{ color: 'var(--color-text-tertiary)' }}><X size={18} /></button>
         </div>
 
         {/* Form */}
-        <div className="px-6 py-5 space-y-4 overflow-y-auto max-h-[480px]">
+        <div className="px-6 py-5 space-y-4">
           <div>
             <label className="block text-[12px] font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>Title *</label>
             <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="What needs to be done?" className={inputCls} style={inputStyle} />
@@ -507,43 +507,6 @@ function TaskCard({ task, onToggleDone, onToggleSubtask, onEdit, onDelete, compa
   );
 }
 
-// ─── Cross-Page Navigation ──────────────────────────────────────────────────
-function CrossPageNav({ current }) {
-  const pages = [
-    { key: 'autofiller', label: 'AutoFiller', icon: Zap, href: 'options.html' },
-    { key: 'bookmarks', label: 'Bookmarks', icon: Bookmark, href: 'bookmarks.html' },
-    { key: 'tasks', label: 'Tasks', icon: ListTodo, href: 'tasks.html' },
-  ];
-  return (
-    <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-      <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-text-tertiary)' }}>Navigate</h4>
-      <div className="space-y-1">
-        {pages.filter(p => p.key !== current).map(page => {
-          const Icon = page.icon;
-          return (
-            <a
-              key={page.key}
-              href={page.href}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              <Icon size={14} className="text-primary-500" />
-              {page.label}
-            </a>
-          );
-        })}
-        <a
-          href="help.html"
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          <HelpCircle size={14} style={{ color: 'var(--color-text-tertiary)' }} />
-          Help & Docs
-        </a>
-      </div>
-    </div>
-  );
-}
 
 // ─── Main Tasks Component ───────────────────────────────────────────────────
 export default function Tasks() {
@@ -780,6 +743,18 @@ export default function Tasks() {
               {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
             </button>
           </div>
+          {/* Quick Nav (3 horizontal icons) */}
+          <div className="flex gap-1.5 mt-3">
+            <a href="options.html" title="AutoFiller" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <Zap size={15} />
+            </a>
+            <a href="bookmarks.html" title="Bookmarks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <Bookmark size={15} />
+            </a>
+            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <HelpCircle size={15} />
+            </a>
+          </div>
         </div>
 
         {/* Add Task */}
@@ -864,8 +839,7 @@ export default function Tasks() {
           </div>
         </div>
 
-        {/* Cross-page nav */}
-        <CrossPageNav current="tasks" />
+        {/* Cross-page nav removed from here */}
 
         {/* Import / Export at bottom */}
         <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>

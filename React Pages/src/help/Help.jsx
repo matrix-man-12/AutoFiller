@@ -3,7 +3,7 @@ import {
   Moon, Sun, Layout, Globe, Settings2, MousePointer2, Keyboard,
   Zap, Trash2, Bookmark, ListTodo, Search, Tag, Pin,
   CheckCircle2, Flag, CalendarDays, HelpCircle, ArrowRight,
-  Upload, Download, ExternalLink
+  Upload, Download, ExternalLink, AlertTriangle, X
 } from 'lucide-react';
 
 // ─── SVG Background ─────────────────────────────────────────────────────────
@@ -18,6 +18,18 @@ function SvgBackground() {
       <circle cx="200" cy="700" r="160" fill="none" stroke={s} strokeWidth="0.6"/>
       <circle cx="1200" cy="200" r="140" fill="none" stroke={s} strokeWidth="0.5"/>
     </svg>
+  );
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+function Toast({ message, type = 'success', onDismiss }) {
+  useEffect(() => { const t = setTimeout(onDismiss, 3500); return () => clearTimeout(t); }, [onDismiss]);
+  return (
+    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border text-[13px] font-bold ${type === 'success' ? 'border-success-500/30' : 'border-danger-300'}`} style={{ backgroundColor: 'var(--color-surface-card)', color: 'var(--color-text-primary)' }}>
+      {type === 'success' ? <CheckCircle2 size={17} className="text-success-500 shrink-0" /> : <AlertTriangle size={17} className="text-primary-400 shrink-0" />}
+      {message}
+      <button onClick={onDismiss} className="ml-2 cursor-pointer" style={{ color: 'var(--color-text-tertiary)' }}><X size={14} /></button>
+    </div>
   );
 }
 
@@ -187,7 +199,7 @@ function BookmarksDocs() {
             { icon: Search, title: 'Multi-Keyword Search', desc: 'Type multiple words separated by spaces. ALL keywords must match across URL, title, description, or tags. For example, "react docs api" will find bookmarks that contain all three words anywhere in their metadata.' },
             { icon: Tag, title: 'Tag System', desc: 'Add colored tags for instant categorization. Tags appear as filter chips in the sidebar — click any tag to toggle filtering. Each tag gets a unique color based on its name for quick visual scanning.' },
             { icon: Pin, title: 'Pin & Organize', desc: 'Pin important bookmarks to the top of any sorted list. Switch between grid view (card layout) and list view (compact rows). Sort by newest, oldest, or alphabetical order.' },
-            { icon: ExternalLink, title: 'Quick Bookmark', desc: 'Use the "Bookmark This Page" button in the popup to instantly save the current browser tab — no need to open the full Bookmarks page. Title and URL are captured automatically.' },
+            { icon: ExternalLink, title: 'Quick Bookmark Shortcut', desc: 'Press Alt+B to instantly save the current browser tab. You can also use the "Bookmark This Page" button in the popup. To customize the Alt+B shortcut, visit chrome://extensions/shortcuts in your browser.' },
           ].map(item => (
             <div key={item.title} className="flex gap-4 items-start p-4 rounded-xl border" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)' }}>
               <item.icon size={18} className="text-primary-500 shrink-0 mt-0.5" />
@@ -210,7 +222,7 @@ function BookmarksDocs() {
             'Click tag chips in the sidebar to filter by specific tags.',
             'Pin important bookmarks to keep them at the top of the list.',
             'Switch between Grid and List views using the toggle buttons.',
-            'Use the "Bookmark This Page" shortcut in the popup for one-click saving.',
+            'Press Alt+B anytime to instantly save the current page to your bookmarks.',
           ].map((step, i) => (
             <li key={i} className="flex gap-3 items-start">
               <span className="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-[11px] font-bold shrink-0">{i + 1}</span>
@@ -303,10 +315,126 @@ function ImportExportInfo() {
   );
 }
 
+// ─── Data Management ────────────────────────────────────────────────────────
+function DataManagement({ setToast }) {
+  const [clearApps, setClearApps] = useState(false);
+  const [clearBookmarks, setClearBookmarks] = useState(false);
+  const [clearTasks, setClearTasks] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  const canClear = clearApps || clearBookmarks || clearTasks;
+
+  const handleClear = async () => {
+    if (!canClear) return;
+    if (typeof window.chrome !== 'undefined' && chrome.storage) {
+      if (clearApps) await chrome.storage.local.remove('apps');
+      if (clearBookmarks) await chrome.storage.local.remove('bookmarks');
+      if (clearTasks) await chrome.storage.local.remove('tasks');
+      setToast({ message: 'Selected data cleared successfully.', type: 'success' });
+      setClearApps(false);
+      setClearBookmarks(false);
+      setClearTasks(false);
+      setIsConfirming(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-2xl font-black tracking-tight mb-3" style={{ color: 'var(--color-text-primary)' }}>Data Management</h2>
+        <p className="text-[14px] font-medium leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+          Select specific features below to permanently clear their data from your browser storage. This action cannot be undone. Always export a backup first!
+        </p>
+      </div>
+
+      <section className="p-6 rounded-2xl shadow-sm border border-danger-200" style={{ backgroundColor: 'var(--color-surface-card)' }}>
+        <div className="flex items-center gap-3 mb-5">
+           <div className="p-2.5 rounded-xl bg-danger-50 text-danger-600"><Trash2 size={20} /></div>
+           <h3 className="text-lg font-extrabold" style={{ color: 'var(--color-text-primary)' }}>Clear Stored Data</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+           <div 
+             onClick={() => setClearApps(!clearApps)} 
+             className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-start gap-2 ${clearApps ? 'border-danger-400 bg-danger-50' : 'hover:scale-[1.02]'}`} 
+             style={clearApps ? {} : { borderColor: 'var(--color-border-subtle)', backgroundColor: 'var(--color-surface-raised)' }}
+           >
+             <div className={`p-2 rounded-lg transition-colors ${clearApps ? 'bg-danger-500 text-white shadow-sm' : 'bg-black/5 dark:bg-white/10'}`} style={!clearApps ? { color: 'var(--color-text-secondary)' } : {}}>
+               <Zap size={18} />
+             </div>
+             <span className="font-extrabold text-[13px] mt-1" style={{ color: clearApps ? 'var(--color-danger-700)' : 'var(--color-text-primary)' }}>AutoFiller</span>
+             {clearApps ? (
+               <span className="text-[10px] font-bold text-danger-500 uppercase tracking-widest mt-auto pt-2">Selected</span>
+             ) : (
+               <span className="text-[10px] font-bold uppercase tracking-widest mt-auto pt-2 opacity-0">Select</span>
+             )}
+           </div>
+
+           <div 
+             onClick={() => setClearBookmarks(!clearBookmarks)} 
+             className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-start gap-2 ${clearBookmarks ? 'border-danger-400 bg-danger-50' : 'hover:scale-[1.02]'}`} 
+             style={clearBookmarks ? {} : { borderColor: 'var(--color-border-subtle)', backgroundColor: 'var(--color-surface-raised)' }}
+           >
+             <div className={`p-2 rounded-lg transition-colors ${clearBookmarks ? 'bg-danger-500 text-white shadow-sm' : 'bg-black/5 dark:bg-white/10'}`} style={!clearBookmarks ? { color: 'var(--color-text-secondary)' } : {}}>
+               <Bookmark size={18} />
+             </div>
+             <span className="font-extrabold text-[13px] mt-1" style={{ color: clearBookmarks ? 'var(--color-danger-700)' : 'var(--color-text-primary)' }}>Bookmarks</span>
+             {clearBookmarks ? (
+               <span className="text-[10px] font-bold text-danger-500 uppercase tracking-widest mt-auto pt-2">Selected</span>
+             ) : (
+               <span className="text-[10px] font-bold uppercase tracking-widest mt-auto pt-2 opacity-0">Select</span>
+             )}
+           </div>
+
+           <div 
+             onClick={() => setClearTasks(!clearTasks)} 
+             className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-start gap-2 ${clearTasks ? 'border-danger-400 bg-danger-50' : 'hover:scale-[1.02]'}`} 
+             style={clearTasks ? {} : { borderColor: 'var(--color-border-subtle)', backgroundColor: 'var(--color-surface-raised)' }}
+           >
+             <div className={`p-2 rounded-lg transition-colors ${clearTasks ? 'bg-danger-500 text-white shadow-sm' : 'bg-black/5 dark:bg-white/10'}`} style={!clearTasks ? { color: 'var(--color-text-secondary)' } : {}}>
+               <ListTodo size={18} />
+             </div>
+             <span className="font-extrabold text-[13px] mt-1" style={{ color: clearTasks ? 'var(--color-danger-700)' : 'var(--color-text-primary)' }}>Tasks</span>
+             {clearTasks ? (
+               <span className="text-[10px] font-bold text-danger-500 uppercase tracking-widest mt-auto pt-2">Selected</span>
+             ) : (
+               <span className="text-[10px] font-bold uppercase tracking-widest mt-auto pt-2 opacity-0">Select</span>
+             )}
+           </div>
+        </div>
+
+        {isConfirming ? (
+          <div className="flex items-center gap-3 p-4 rounded-xl border border-danger-300 bg-danger-50 text-danger-900 shadow-sm transition-all duration-300 flex-wrap">
+             <AlertTriangle size={24} className="shrink-0 text-danger-600" />
+             <div className="flex-1 min-w-[200px]">
+               <p className="font-bold text-[14px] mb-1">Are you absolutely sure?</p>
+               <p className="text-xs font-medium text-danger-700">This will wipe your selected data. It cannot be recovered.</p>
+             </div>
+             <div className="flex gap-2">
+               <button onClick={() => setIsConfirming(false)} className="px-4 py-2 border border-danger-300 rounded-lg text-xs font-bold cursor-pointer hover:bg-danger-100 text-danger-800">Cancel</button>
+               <button onClick={handleClear} className="px-4 py-2 bg-danger-600 text-white rounded-lg text-xs font-bold cursor-pointer hover:bg-danger-700 shadow-sm">Yes, Delete Data</button>
+             </div>
+          </div>
+        ) : (
+          <button 
+             onClick={() => setIsConfirming(true)} 
+             disabled={!canClear}
+             className="px-6 py-2.5 bg-danger-50 text-danger-600 border border-danger-200 font-bold rounded-lg cursor-pointer hover:bg-danger-100 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors text-[14px]"
+          >
+            Clear Selected Data
+          </button>
+        )}
+      </section>
+    </div>
+  );
+}
+
 // ─── Main Help Component ────────────────────────────────────────────────────
 export default function Help() {
   const [theme, setTheme] = useState(() => localStorage.getItem('autofiller-theme') || 'light');
   const [activeTab, setActiveTab] = useState('autofiller');
+  const [toast, setToast] = useState(null);
+  const importRef = React.useRef(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -315,10 +443,80 @@ export default function Help() {
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
+  // ── Export All Settings ──
+  const handleExportAll = async () => {
+    try {
+      let apps = [], bookmarks = [], tasks = [];
+      if (typeof window.chrome !== 'undefined' && chrome.storage) {
+        const result = await chrome.storage.local.get(['apps', 'bookmarks', 'tasks']);
+        apps = result.apps || [];
+        bookmarks = result.bookmarks || [];
+        tasks = result.tasks || [];
+      }
+      const payload = JSON.stringify({ version: 1, exportType: 'full', exportDate: new Date().toISOString(), apps, bookmarks, tasks }, null, 2);
+      const blob = new Blob([payload], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url; link.download = 'superx-all-settings.json'; link.click();
+      URL.revokeObjectURL(url);
+      setToast({ message: 'All settings exported!', type: 'success' });
+    } catch {
+      setToast({ message: 'Export failed.', type: 'error' });
+    }
+  };
+
+  // ── Import All Settings ──
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        if (typeof window.chrome !== 'undefined' && chrome.storage) {
+          const result = await chrome.storage.local.get(['apps', 'bookmarks', 'tasks']);
+          const updates = {};
+          let parts = [];
+
+          if (parsed.apps && Array.isArray(parsed.apps)) {
+            const existing = result.apps || [];
+            const existingIds = new Set(existing.map(a => a.id));
+            const newApps = parsed.apps.filter(a => !existingIds.has(a.id));
+            if (newApps.length > 0) { updates.apps = [...existing, ...newApps]; parts.push(`${newApps.length} app(s)`); }
+          }
+          if (parsed.bookmarks && Array.isArray(parsed.bookmarks)) {
+            const existing = result.bookmarks || [];
+            const existingIds = new Set(existing.map(b => b.id));
+            const newBms = parsed.bookmarks.filter(b => !existingIds.has(b.id));
+            if (newBms.length > 0) { updates.bookmarks = [...existing, ...newBms]; parts.push(`${newBms.length} bookmark(s)`); }
+          }
+          if (parsed.tasks && Array.isArray(parsed.tasks)) {
+            const existing = result.tasks || [];
+            const existingIds = new Set(existing.map(t => t.id));
+            const newTasks = parsed.tasks.filter(t => !existingIds.has(t.id));
+            if (newTasks.length > 0) { updates.tasks = [...existing, ...newTasks]; parts.push(`${newTasks.length} task(s)`); }
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await chrome.storage.local.set(updates);
+            setToast({ message: `Imported: ${parts.join(', ')}.`, type: 'success' });
+          } else {
+            setToast({ message: 'Everything already exists.', type: 'success' });
+          }
+        }
+      } catch {
+        setToast({ message: 'Invalid JSON file.', type: 'error' });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const tabs = [
     { key: 'autofiller', label: 'AutoFiller', icon: Zap },
     { key: 'bookmarks', label: 'Bookmarks', icon: Bookmark },
     { key: 'tasks', label: 'Tasks', icon: ListTodo },
+    { key: 'data', label: 'Data Management', icon: Settings2 },
   ];
 
   return (
@@ -337,6 +535,18 @@ export default function Help() {
             <button onClick={toggleTheme} className="p-2 rounded-lg cursor-pointer" style={{ color: 'var(--color-text-secondary)' }} title={theme === 'light' ? 'Dark mode' : 'Light mode'}>
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
+          </div>
+          {/* Quick Nav (3 horizontal icons) */}
+          <div className="flex gap-1.5 mt-3">
+            <a href="options.html" title="AutoFiller" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <Zap size={15} />
+            </a>
+            <a href="bookmarks.html" title="Bookmarks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <Bookmark size={15} />
+            </a>
+            <a href="tasks.html" title="Tasks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <ListTodo size={15} />
+            </a>
           </div>
         </div>
 
@@ -368,23 +578,21 @@ export default function Help() {
 
         {/* Navigate */}
         <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-          <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-text-tertiary)' }}>Navigate</h4>
-          <div className="space-y-1">
-            <a href="options.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
-              <Zap size={14} className="text-primary-500" /> AutoFiller
-            </a>
-            <a href="bookmarks.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
-              <Bookmark size={14} className="text-primary-500" /> Bookmarks
-            </a>
-            <a href="tasks.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
-              <ListTodo size={14} className="text-primary-500" /> Tasks
-            </a>
+          <div className="flex gap-2">
+            <button onClick={() => importRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
+              <Download size={13} /> Import All
+            </button>
+            <button onClick={handleExportAll} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
+              <Upload size={13} /> Export All
+            </button>
           </div>
         </div>
       </aside>
 
       {/* ── Main Content ── */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative z-[1]">
+        <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
+        {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
         {/* Top Bar (h-16, matching other pages) */}
         <header className="h-16 border-b px-8 flex items-center justify-between shrink-0" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
           <h2 className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
@@ -399,7 +607,8 @@ export default function Help() {
             {activeTab === 'autofiller' && <AutoFillerDocs />}
             {activeTab === 'bookmarks' && <BookmarksDocs />}
             {activeTab === 'tasks' && <TasksDocs />}
-            <ImportExportInfo />
+            {activeTab === 'data' && <DataManagement setToast={setToast} />}
+            {activeTab !== 'data' && <ImportExportInfo />}
           </div>
         </div>
       </main>

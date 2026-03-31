@@ -10,7 +10,11 @@
   ],
   "action": {
     "default_popup": "dist/popup.html",
-    "default_title": "Super X Menu"
+    "default_title": "Super X Menu",
+    "default_icon": "superx-icon.png"
+  },
+  "icons": {
+    "128": "superx-icon.png"
   },
   "options_ui": {
     "page": "dist/options.html",
@@ -33,6 +37,13 @@
         "mac": "Alt+S"
       },
       "description": "Clear AutoFilled fields on the current page."
+    },
+    "add-bookmark": {
+      "suggested_key": {
+        "default": "Alt+B",
+        "mac": "Alt+B"
+      },
+      "description": "Bookmark the current page instantly"
     }
   }
 }

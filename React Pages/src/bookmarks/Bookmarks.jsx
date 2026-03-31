@@ -253,7 +253,7 @@ export default function Bookmarks() {
 
   const { theme, toggle: toggleTheme } = useTheme();
 
-  // Load
+  // Load & Listen
   useEffect(() => {
     async function load() {
       if (typeof window.chrome !== 'undefined' && chrome.storage) {
@@ -263,6 +263,22 @@ export default function Bookmarks() {
       setLoading(false);
     }
     load();
+
+    const handleStorageChange = (changes, area) => {
+      if (area === 'local' && changes.bookmarks) {
+        setBookmarks(changes.bookmarks.newValue || []);
+      }
+    };
+
+    if (typeof window.chrome !== 'undefined' && chrome.storage) {
+      chrome.storage.onChanged.addListener(handleStorageChange);
+    }
+
+    return () => {
+      if (typeof window.chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      }
+    };
   }, []);
 
   // Save
@@ -424,6 +440,18 @@ export default function Bookmarks() {
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
           </div>
+          {/* Quick Nav (3 horizontal icons) */}
+          <div className="flex gap-1.5 mt-3">
+            <a href="options.html" title="AutoFiller" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <Zap size={15} />
+            </a>
+            <a href="tasks.html" title="Tasks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <ListTodo size={15} />
+            </a>
+            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <HelpCircle size={15} />
+            </a>
+          </div>
         </div>
 
         {/* Add Bookmark */}
@@ -507,21 +535,7 @@ export default function Bookmarks() {
           </div>
         </div>
 
-        {/* ─── Navigation (replaces old Docs/Import/Export position) ─── */}
-        <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
-          <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-text-tertiary)' }}>Navigate</h4>
-          <div className="space-y-1">
-            <a href="options.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
-              <Zap size={14} className="text-primary-500" /> AutoFiller
-            </a>
-            <a href="tasks.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
-              <ListTodo size={14} className="text-primary-500" /> Tasks
-            </a>
-            <a href="help.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
-              <HelpCircle size={14} style={{ color: 'var(--color-text-tertiary)' }} /> Help & Docs
-            </a>
-          </div>
-        </div>
+        {/* Navigation moved to top */}
 
         {/* Import / Export at bottom */}
         <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
