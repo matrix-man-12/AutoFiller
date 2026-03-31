@@ -60,6 +60,15 @@
   --color-border: #E8E2D8;
   --color-border-subtle: #F0EBE3;
   --color-border-strong: #D1C9BB;
+
+  /* ── Info: Warm Slate Blue ── */
+  --color-info-50: #EFF4FB;
+  --color-info-100: #DCEAF7;
+  --color-info-200: #B8D3EE;
+  --color-info-400: #5B9BD5;
+  --color-info-500: #4285C4;
+  --color-info-600: #3570A8;
+  --color-info-700: #2A5A8A;
 }
 
 /* ── Dark Theme Overrides ── */

@@ -23,7 +23,11 @@ import {
   FileText,
   ToggleLeft,
   ToggleRight,
-  Copy
+  Copy,
+  Bookmark,
+  ListTodo,
+  HelpCircle,
+  Zap
 } from 'lucide-react';
 
 const generateId = (prefix) => `${prefix}_${Math.random().toString(36).substr(2, 9)}`;
@@ -882,7 +886,10 @@ export default function Options() {
           style={{ borderColor: 'var(--color-border-subtle)' }}
         >
           <div className="flex items-center justify-between mb-1">
-            <h1 className="text-xl font-extrabold tracking-tight text-primary-500">AutoFiller</h1>
+            <div>
+              <h1 className="text-xl font-extrabold tracking-tight text-primary-500">AutoFiller</h1>
+              <p className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>SuperX</p>
+            </div>
             <button 
               onClick={toggleTheme}
               className="p-2 rounded-lg cursor-pointer"
@@ -893,31 +900,17 @@ export default function Options() {
             </button>
           </div>
 
-          {/* Utility Row */}
-          <div className="flex gap-2 mt-4">
-            <a 
-              href="help.html" 
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 py-2 px-3 text-primary-600 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 hover:border-primary-300 bg-primary-50"
-            >
-              <ExternalLink size={13} /> Docs
+          {/* Quick Nav (3 horizontal icons) */}
+          <div className="flex gap-1.5 mt-3">
+            <a href="bookmarks.html" title="Bookmarks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <Bookmark size={15} />
             </a>
-            <button
-              onClick={() => importInputRef.current?.click()}
-              title="Import settings from a JSON file"
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border border-primary-200 bg-primary-50 text-primary-600"
-            >
-              <Download size={13} />
-              Import
-            </button>
-            <button
-              onClick={() => setShowExportModal(true)}
-              disabled={apps.length === 0}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border border-primary-200 bg-primary-50 text-primary-600"
-            >
-              <Upload size={13} />
-              Export
-            </button>
+            <a href="tasks.html" title="Tasks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <ListTodo size={15} />
+            </a>
+            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <HelpCircle size={15} />
+            </a>
           </div>
         </div>
 
@@ -1025,6 +1018,27 @@ export default function Options() {
               </div>
             ))
           )}
+        </div>
+
+        {/* Nav removed from here */}
+
+        {/* Import / Export at bottom */}
+        <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+          <div className="flex gap-2">
+            <button
+              onClick={() => importInputRef.current?.click()}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600"
+            >
+              <Download size={13} /> Import
+            </button>
+            <button
+              onClick={() => setShowExportModal(true)}
+              disabled={apps.length === 0}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Upload size={13} /> Export
+            </button>
+          </div>
         </div>
       </aside>
 

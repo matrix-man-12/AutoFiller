@@ -4,6 +4,8 @@ chrome.commands.onCommand.addListener((command) => {
     executeActionInActiveTab('trigger_autofill');
   } else if (command === 'autoclear-now') {
     executeActionInActiveTab('trigger_autoclear');
+  } else if (command === 'add-bookmark') {
+    addCurrentPageToBookmarks();
   }
 });
 
@@ -44,5 +46,46 @@ async function executeActionInActiveTab(action) {
     
   } catch (error) {
     console.error("AutoFiller Background Error: ", error);
+  }
+}
+
+/**
+ * Adds the current active tab to the local extension bookmarks
+ */
+async function addCurrentPageToBookmarks() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.url || tab.url.startsWith('chrome://')) return;
+
+    const { bookmarks = [] } = await chrome.storage.local.get('bookmarks');
+    
+    // Check if already bookmarked
+    if (bookmarks.some(b => b.url === tab.url)) {
+      console.log('Already bookmarked');
+      return;
+    }
+
+    const newBookmark = {
+      id: crypto.randomUUID(),
+      title: tab.title || 'Untitled',
+      url: tab.url,
+      description: '',
+      tags: [],
+      createdAt: new Date().toISOString()
+    };
+
+    bookmarks.push(newBookmark);
+    await chrome.storage.local.set({ bookmarks });
+    console.log('Bookmark added successfully');
+    
+    // Optional: show a quick badge or notification
+    chrome.action.setBadgeText({ text: '✓', tabId: tab.id });
+    chrome.action.setBadgeBackgroundColor({ color: '#5B9A6F', tabId: tab.id });
+    setTimeout(() => {
+      chrome.action.setBadgeText({ text: '', tabId: tab.id });
+    }, 2000);
+
+  } catch (error) {
+    console.error('Failed to add bookmark:', error);
   }
 }

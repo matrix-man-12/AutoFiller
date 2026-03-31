@@ -3,26 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AutoFiller Help</title>
-    <!-- Dark Mode pre-initialization script to prevent FOUC -->
-    <script>
-      (function() {
-        try {
-          const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const userDark = localStorage.getItem('autofiller-theme-dark');
-          const isDark = userDark === 'true' || (userDark === null && systemDark);
-          if (isDark) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-          } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-          }
-        } catch (e) {
-          console.error('Theme init error:', e);
-        }
-      })();
-    </script>
+    <title>SuperX — Help & Docs</title>
+    <link rel="icon" type="image/png" href="/superx-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
   </head>
-  <body>
+  <body class="h-screen w-full m-0 overflow-hidden antialiased" style="background-color: var(--color-surface);">
     <div id="root"></div>
     <script type="module" src="/src/help/main.jsx"></script>
   </body>
