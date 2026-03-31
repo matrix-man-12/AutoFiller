@@ -3,18 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AutoFiller — Bookmarks</title>
+    <title>Super X — Bookmarks</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
-    <script>
-      (function() {
-        var t = localStorage.getItem('autofiller-theme');
-        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        }
-      })();
-    </script>
+    <script src="theme-init.js"></script>
   </head>
   <body class="w-full min-h-screen m-0 antialiased" style="background-color: var(--color-surface);">
     <div id="root"></div>

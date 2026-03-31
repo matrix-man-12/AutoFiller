@@ -23,7 +23,11 @@ import {
   FileText,
   ToggleLeft,
   ToggleRight,
-  Copy
+  Copy,
+  Bookmark,
+  ListTodo,
+  HelpCircle,
+  Zap
 } from 'lucide-react';
 
 const generateId = (prefix) => `${prefix}_${Math.random().toString(36).substr(2, 9)}`;
@@ -883,6 +887,7 @@ export default function Options() {
         >
           <div className="flex items-center justify-between mb-1">
             <h1 className="text-xl font-extrabold tracking-tight text-primary-500">AutoFiller</h1>
+            <p className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>Super X</p>
             <button 
               onClick={toggleTheme}
               className="p-2 rounded-lg cursor-pointer"
@@ -1025,6 +1030,22 @@ export default function Options() {
               </div>
             ))
           )}
+        </div>
+
+        {/* Cross-page navigation */}
+        <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+          <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-text-tertiary)' }}>Navigate</h4>
+          <div className="space-y-1">
+            <a href="bookmarks.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
+              <Bookmark size={14} className="text-primary-500" /> Bookmarks
+            </a>
+            <a href="tasks.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
+              <ListTodo size={14} className="text-primary-500" /> Tasks
+            </a>
+            <a href="help.html" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}>
+              <HelpCircle size={14} style={{ color: 'var(--color-text-tertiary)' }} /> Help & Docs
+            </a>
+          </div>
         </div>
       </aside>
 

@@ -3,7 +3,7 @@ import {
   Bookmark, Search, Plus, Trash2, X, Globe,
   ExternalLink, Upload, Download, Sun, Moon, Pin, PinOff,
   CheckCircle2, AlertTriangle, Edit3, Tag, BookmarkPlus,
-  Grid, List, ChevronDown, ArrowLeft
+  Grid, List, ChevronDown, Zap, ListTodo, HelpCircle, Settings2
 } from 'lucide-react';
 
 const generateId = (prefix) => `${prefix}_${Math.random().toString(36).substr(2, 9)}`;
@@ -434,7 +434,7 @@ export default function Bookmarks() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'autofiller-bookmarks.json';
+    link.download = 'superx-bookmarks.json';
     link.click();
     URL.revokeObjectURL(url);
     setToast({ message: `Exported ${bookmarks.length} bookmark${bookmarks.length !== 1 ? 's' : ''}.`, type: 'success' });
@@ -495,23 +495,29 @@ export default function Bookmarks() {
         <div className="max-w-6xl mx-auto px-6 py-5">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <a href="popup.html" title="Back to Popup" className="p-2 rounded-lg cursor-pointer border" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-                <ArrowLeft size={16} />
-              </a>
               <div>
                 <h1 className="text-xl font-extrabold tracking-tight text-primary-500">Bookmarks</h1>
                 <p className="text-[11px] font-semibold mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
-                  {bookmarks.length} bookmark{bookmarks.length !== 1 ? 's' : ''} saved
+                  {bookmarks.length} bookmark{bookmarks.length !== 1 ? 's' : ''} saved · Super X
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <a href="options.html" className="flex items-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+                <Zap size={13} className="text-primary-500" /> AutoFiller
+              </a>
+              <a href="tasks.html" className="flex items-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+                <ListTodo size={13} className="text-primary-500" /> Tasks
+              </a>
               <button onClick={() => importRef.current?.click()} className="flex items-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
                 <Download size={13} /> Import
               </button>
               <button onClick={handleExport} disabled={bookmarks.length === 0} className="flex items-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed">
                 <Upload size={13} /> Export
               </button>
+              <a href="help.html" className="p-2 rounded-lg cursor-pointer" style={{ color: 'var(--color-text-secondary)' }} title="Help & Docs">
+                <HelpCircle size={16} />
+              </a>
               <button onClick={toggleTheme} className="p-2 rounded-lg cursor-pointer" style={{ color: 'var(--color-text-secondary)' }} title={theme === 'light' ? 'Dark mode' : 'Light mode'}>
                 {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
               </button>

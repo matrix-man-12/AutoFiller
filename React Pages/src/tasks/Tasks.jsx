@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ListTodo, Plus, Trash2, X, Sun, Moon,
   CheckCircle2, AlertTriangle, Circle, Clock, AlertOctagon,
-  ChevronDown, ChevronRight, Upload, Download, ArrowLeft,
-  Edit3, Flag, StickyNote, CalendarDays, Filter
+  ChevronDown, ChevronRight, ChevronLeft, Upload, Download,
+  Edit3, Flag, StickyNote, CalendarDays, Zap, Bookmark, HelpCircle,
+  Settings2, Archive
 } from 'lucide-react';
 
 const generateId = (prefix) => `${prefix}_${Math.random().toString(36).substr(2, 9)}`;
@@ -22,6 +23,9 @@ const STATUSES = [
   { value: 'done',        label: 'Done',         icon: CheckCircle2,  color: '#5B9A6F' },
   { value: 'blocked',     label: 'Blocked',      icon: AlertOctagon,  color: '#D94F4F' },
 ];
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
 const getPriority = (v) => PRIORITIES.find(p => p.value === v) || PRIORITIES[2];
 const getStatus = (v) => STATUSES.find(s => s.value === v) || STATUSES[0];
@@ -119,6 +123,111 @@ function CustomSelect({ value, onChange, options, className = '', renderOption }
               {renderOption ? renderOption(opt) : opt.label}
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Custom Date Picker ─────────────────────────────────────────────────────
+function DatePicker({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+  const today = new Date();
+  const selected = value ? new Date(value + 'T00:00:00') : null;
+  const [viewYear, setViewYear] = useState(selected?.getFullYear() || today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(selected?.getMonth() ?? today.getMonth());
+
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setIsOpen(false); };
+    if (isOpen) document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [isOpen]);
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+  const cells = [];
+  for (let i = 0; i < firstDayOfWeek; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  };
+
+  const selectDay = (day) => {
+    const mm = String(viewMonth + 1).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
+    onChange(`${viewYear}-${mm}-${dd}`);
+    setIsOpen(false);
+  };
+
+  const isToday = (day) => day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
+  const isSelected = (day) => selected && day === selected.getDate() && viewMonth === selected.getMonth() && viewYear === selected.getFullYear();
+
+  const displayStr = selected
+    ? `${MONTHS[selected.getMonth()]} ${selected.getDate()}, ${selected.getFullYear()}`
+    : 'Select date…';
+
+  return (
+    <div className="relative" ref={ref}>
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center justify-between w-full px-4 py-3 border rounded-xl font-semibold text-[13px] select-none cursor-pointer transition-all duration-200 ${isOpen ? 'ring-2 ring-primary-400/30 border-primary-400' : ''}`}
+        style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: isOpen ? 'var(--color-primary-400)' : 'var(--color-border)', color: value ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}
+      >
+        <span className="flex items-center gap-2">
+          <CalendarDays size={14} style={{ color: 'var(--color-text-tertiary)' }} />
+          {displayStr}
+        </span>
+        {value && (
+          <button onClick={(e) => { e.stopPropagation(); onChange(''); }} className="p-0.5 cursor-pointer rounded hover:bg-danger-50" style={{ color: 'var(--color-text-tertiary)' }}>
+            <X size={12} />
+          </button>
+        )}
+      </div>
+      {isOpen && (
+        <div className="absolute z-30 mt-1.5 p-4 rounded-xl border shadow-xl w-72" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
+          {/* Month/Year nav */}
+          <div className="flex items-center justify-between mb-3">
+            <button onClick={prevMonth} className="p-1.5 rounded-lg cursor-pointer hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}><ChevronLeft size={16} /></button>
+            <span className="text-[14px] font-extrabold" style={{ color: 'var(--color-text-primary)' }}>{MONTHS[viewMonth]} {viewYear}</span>
+            <button onClick={nextMonth} className="p-1.5 rounded-lg cursor-pointer hover:bg-primary-50" style={{ color: 'var(--color-text-secondary)' }}><ChevronRight size={16} /></button>
+          </div>
+          {/* Day headers */}
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {DAYS.map(d => (
+              <div key={d} className="text-center text-[10px] font-bold uppercase" style={{ color: 'var(--color-text-tertiary)' }}>{d}</div>
+            ))}
+          </div>
+          {/* Day cells */}
+          <div className="grid grid-cols-7 gap-1">
+            {cells.map((day, i) => (
+              <div key={i} className="aspect-square flex items-center justify-center">
+                {day ? (
+                  <button
+                    onClick={() => selectDay(day)}
+                    className={`w-8 h-8 rounded-lg text-[12px] font-bold cursor-pointer transition-all ${
+                      isSelected(day) ? 'bg-primary-500 text-white shadow-sm' :
+                      isToday(day) ? 'border-2 border-primary-300' : 'hover:bg-primary-50'
+                    }`}
+                    style={!isSelected(day) && !isToday(day) ? { color: 'var(--color-text-primary)' } : isToday(day) && !isSelected(day) ? { color: 'var(--color-primary-600)' } : {}}
+                  >
+                    {day}
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          {/* Quick actions */}
+          <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+            <button onClick={() => { const t = new Date(); selectDay(t.getDate()); setViewMonth(t.getMonth()); setViewYear(t.getFullYear()); }} className="flex-1 py-1.5 text-[11px] font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">Today</button>
+            <button onClick={() => { onChange(''); setIsOpen(false); }} className="flex-1 py-1.5 text-[11px] font-bold rounded-lg cursor-pointer border" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)', backgroundColor: 'var(--color-surface-raised)' }}>Clear</button>
+          </div>
         </div>
       )}
     </div>
@@ -261,7 +370,7 @@ function TaskModal({ task, onSave, onClose }) {
 
           <div>
             <label className="block text-[12px] font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--color-text-tertiary)' }}>Due Date</label>
-            <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inputCls} style={inputStyle} />
+            <DatePicker value={dueDate} onChange={setDueDate} />
           </div>
 
           <div>
@@ -276,10 +385,7 @@ function TaskModal({ task, onSave, onClose }) {
               {subtasks.map((sub, idx) => (
                 <div key={sub.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border-subtle)' }}>
                   <button onClick={() => setSubtasks(prev => prev.map((s, i) => i === idx ? { ...s, done: !s.done } : s))} className="cursor-pointer shrink-0">
-                    {sub.done
-                      ? <CheckCircle2 size={16} className="text-success-500" />
-                      : <Circle size={16} style={{ color: 'var(--color-text-tertiary)' }} />
-                    }
+                    {sub.done ? <CheckCircle2 size={16} className="text-success-500" /> : <Circle size={16} style={{ color: 'var(--color-text-tertiary)' }} />}
                   </button>
                   <input
                     type="text"
@@ -325,17 +431,14 @@ function TaskModal({ task, onSave, onClose }) {
 }
 
 // ─── Task Card ──────────────────────────────────────────────────────────────
-function TaskCard({ task, onToggleDone, onToggleSubtask, onEdit, onDelete }) {
+function TaskCard({ task, onToggleDone, onToggleSubtask, onEdit, onDelete, compact = false }) {
   const [expanded, setExpanded] = useState(false);
   const p = getPriority(task.priority);
-  const s = getStatus(task.status);
   const totalSubs = task.subtasks?.length || 0;
-  const doneSubs = task.subtasks?.filter(st => st.done).length || 0;
-
   const overdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done';
 
   return (
-    <div className="rounded-2xl border shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: task.done ? 'var(--color-success-200)' : 'var(--color-border)' }}>
+    <div className={`rounded-2xl border shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden ${compact ? 'opacity-70' : ''}`} style={{ backgroundColor: 'var(--color-surface-card)', borderColor: task.done ? 'var(--color-success-200)' : 'var(--color-border)' }}>
       {/* Top accent */}
       <div className="h-1" style={{ backgroundColor: p.color }} />
 
@@ -360,7 +463,7 @@ function TaskCard({ task, onToggleDone, onToggleSubtask, onEdit, onDelete }) {
               {task.dueDate && (
                 <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${overdue ? 'text-danger-500' : ''}`} style={overdue ? {} : { color: 'var(--color-text-tertiary)' }}>
                   <CalendarDays size={10} />
-                  {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {new Date(task.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </span>
               )}
             </div>
@@ -389,10 +492,7 @@ function TaskCard({ task, onToggleDone, onToggleSubtask, onEdit, onDelete }) {
                 {task.subtasks.map(sub => (
                   <div key={sub.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border-subtle)' }}>
                     <button onClick={() => onToggleSubtask(task.id, sub.id)} className="cursor-pointer shrink-0">
-                      {sub.done
-                        ? <CheckCircle2 size={14} className="text-success-500" />
-                        : <Circle size={14} style={{ color: 'var(--color-text-tertiary)' }} />
-                      }
+                      {sub.done ? <CheckCircle2 size={14} className="text-success-500" /> : <Circle size={14} style={{ color: 'var(--color-text-tertiary)' }} />}
                     </button>
                     <span className={`text-[12px] font-semibold flex-1 ${sub.done ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--color-text-primary)' }}>{sub.title}</span>
                     {sub.note && <StickyNote size={11} style={{ color: 'var(--color-text-tertiary)' }} title={sub.note} />}
@@ -402,6 +502,44 @@ function TaskCard({ task, onToggleDone, onToggleSubtask, onEdit, onDelete }) {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Cross-Page Navigation ──────────────────────────────────────────────────
+function CrossPageNav({ current }) {
+  const pages = [
+    { key: 'autofiller', label: 'AutoFiller', icon: Zap, href: 'options.html' },
+    { key: 'bookmarks', label: 'Bookmarks', icon: Bookmark, href: 'bookmarks.html' },
+    { key: 'tasks', label: 'Tasks', icon: ListTodo, href: 'tasks.html' },
+  ];
+  return (
+    <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
+      <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-text-tertiary)' }}>Navigate</h4>
+      <div className="space-y-1">
+        {pages.filter(p => p.key !== current).map(page => {
+          const Icon = page.icon;
+          return (
+            <a
+              key={page.key}
+              href={page.href}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <Icon size={14} className="text-primary-500" />
+              {page.label}
+            </a>
+          );
+        })}
+        <a
+          href="help.html"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-bold text-[12px] cursor-pointer transition-colors hover:bg-primary-50"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          <HelpCircle size={14} style={{ color: 'var(--color-text-tertiary)' }} />
+          Help & Docs
+        </a>
       </div>
     </div>
   );
@@ -418,6 +556,7 @@ export default function Tasks() {
   const [filterPriority, setFilterPriority] = useState('all');
   const [sortBy, setSortBy] = useState('priority');
   const [loading, setLoading] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(false);
   const importRef = useRef(null);
 
   const { theme, toggle: toggleTheme } = useTheme();
@@ -442,18 +581,23 @@ export default function Tasks() {
     }
   };
 
-  // Counts
+  // Split active vs completed
+  const activeTasks = tasks.filter(t => t.status !== 'done');
+  const completedTasks = tasks.filter(t => t.status === 'done');
+
+  // Counts (only active tasks for sidebar counts, except done)
   const statusCounts = {
-    all: tasks.length,
+    all: activeTasks.length,
     todo: tasks.filter(t => t.status === 'todo').length,
     in_progress: tasks.filter(t => t.status === 'in_progress').length,
-    done: tasks.filter(t => t.status === 'done').length,
+    done: completedTasks.length,
     blocked: tasks.filter(t => t.status === 'blocked').length,
   };
 
-  // Filter + Sort
-  const filtered = tasks.filter(t => {
-    if (filterStatus !== 'all' && t.status !== filterStatus) return false;
+  // Filter + Sort (only on active tasks when not filtering by done)
+  const baseList = filterStatus === 'done' ? completedTasks : activeTasks;
+  const filtered = baseList.filter(t => {
+    if (filterStatus !== 'all' && filterStatus !== 'done' && t.status !== filterStatus) return false;
     if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
     return true;
   });
@@ -528,7 +672,7 @@ export default function Tasks() {
     const payload = JSON.stringify({ version: 1, exportType: 'tasks', tasks }, null, 2);
     const blob = new Blob([payload], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a'); link.href = url; link.download = 'autofiller-tasks.json'; link.click();
+    const link = document.createElement('a'); link.href = url; link.download = 'superx-tasks.json'; link.click();
     URL.revokeObjectURL(url);
     setToast({ message: `Exported ${tasks.length} task${tasks.length !== 1 ? 's' : ''}.`, type: 'success' });
   };
@@ -571,40 +715,40 @@ export default function Tasks() {
       {/* ── Sidebar ── */}
       <aside className="w-64 flex flex-col border-r shrink-0 z-10 relative" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
         {/* Brand */}
-        <div className="px-5 pt-6 pb-5 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
-          <div className="flex items-center justify-between mb-1">
-            <h1 className="text-xl font-extrabold tracking-tight text-primary-500">Tasks</h1>
+        <div className="px-4 pt-5 pb-4 border-b" style={{ borderColor: 'var(--color-border-subtle)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-lg font-extrabold tracking-tight text-primary-500">Tasks</h1>
+              <p className="text-[10px] font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>Super X</p>
+            </div>
             <button onClick={toggleTheme} className="p-2 rounded-lg cursor-pointer" style={{ color: 'var(--color-text-secondary)' }}>
               {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
             </button>
           </div>
-          <div className="flex gap-2 mt-4">
-            <a href="popup.html" className="inline-flex items-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
-              <ArrowLeft size={13} /> Back
-            </a>
-            <button onClick={() => importRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
-              <Download size={13} /> Import
+          <div className="flex gap-1.5">
+            <button onClick={() => importRef.current?.click()} className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 text-[10px] font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
+              <Download size={11} /> Import
             </button>
-            <button onClick={handleExport} disabled={tasks.length === 0} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed">
-              <Upload size={13} /> Export
+            <button onClick={handleExport} disabled={tasks.length === 0} className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 text-[10px] font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed">
+              <Upload size={11} /> Export
             </button>
           </div>
         </div>
 
         {/* Add Task */}
         <div className="px-4 py-3">
-          <button onClick={() => { setEditingTask(null); setShowModal(true); }} className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold shadow-sm cursor-pointer">
+          <button onClick={() => { setEditingTask(null); setShowModal(true); }} className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold shadow-sm cursor-pointer text-[13px]">
             <Plus size={17} /> New Task
           </button>
         </div>
 
         {/* Filters */}
-        <div className="flex-1 overflow-y-auto px-4 pb-6">
+        <div className="flex-1 overflow-y-auto px-4 pb-2">
           {/* Status Filter */}
-          <div className="mb-5">
+          <div className="mb-4">
             <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2 px-1" style={{ color: 'var(--color-text-tertiary)' }}>Status</h4>
             <div className="space-y-0.5">
-              {[{ value: 'all', label: 'All Tasks', icon: ListTodo, color: 'var(--color-text-secondary)' }, ...STATUSES].map(item => {
+              {[{ value: 'all', label: 'Active Tasks', icon: ListTodo, color: 'var(--color-text-secondary)' }, ...STATUSES.filter(s => s.value !== 'done')].map(item => {
                 const Icon = item.icon;
                 const count = statusCounts[item.value] ?? 0;
                 const active = filterStatus === item.value;
@@ -628,6 +772,23 @@ export default function Tasks() {
                   </button>
                 );
               })}
+              {/* Completed section in sidebar */}
+              <button
+                onClick={() => setFilterStatus('done')}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer text-[13px] font-bold transition-colors"
+                style={{
+                  backgroundColor: filterStatus === 'done' ? 'var(--color-primary-50)' : 'transparent',
+                  color: filterStatus === 'done' ? 'var(--color-primary-700)' : 'var(--color-text-primary)'
+                }}
+              >
+                <span className="flex items-center gap-2">
+                  <Archive size={14} style={{ color: filterStatus === 'done' ? 'var(--color-primary-500)' : '#5B9A6F' }} />
+                  Completed
+                </span>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: filterStatus === 'done' ? 'var(--color-primary-200)' : 'var(--color-surface-raised)', color: filterStatus === 'done' ? 'var(--color-primary-700)' : 'var(--color-text-tertiary)' }}>
+                  {completedTasks.length}
+                </span>
+              </button>
             </div>
           </div>
 
@@ -655,6 +816,9 @@ export default function Tasks() {
             </div>
           </div>
         </div>
+
+        {/* Cross-page nav */}
+        <CrossPageNav current="tasks" />
       </aside>
 
       {/* ── Main ── */}
@@ -662,7 +826,7 @@ export default function Tasks() {
         {/* Top Bar */}
         <header className="h-16 border-b px-8 flex items-center justify-between shrink-0" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
           <h2 className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
-            {filterStatus === 'all' ? 'All Tasks' : getStatus(filterStatus).label}
+            {filterStatus === 'all' ? 'Active Tasks' : filterStatus === 'done' ? 'Completed' : getStatus(filterStatus).label}
             <span className="text-[13px] font-bold ml-2" style={{ color: 'var(--color-text-tertiary)' }}>({sorted.length})</span>
           </h2>
           <div className="flex items-center gap-3">
@@ -686,12 +850,12 @@ export default function Tasks() {
           {sorted.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center p-10 rounded-2xl border border-dashed" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border-strong)' }}>
-                <ListTodo size={40} className="mx-auto mb-4" style={{ color: 'var(--color-text-tertiary)' }} />
+                {filterStatus === 'done' ? <Archive size={40} className="mx-auto mb-4" style={{ color: 'var(--color-text-tertiary)' }} /> : <ListTodo size={40} className="mx-auto mb-4" style={{ color: 'var(--color-text-tertiary)' }} />}
                 <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
-                  {tasks.length === 0 ? 'No tasks yet' : 'No matching tasks'}
+                  {filterStatus === 'done' ? 'No completed tasks' : tasks.length === 0 ? 'No tasks yet' : 'No matching tasks'}
                 </h3>
                 <p className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                  {tasks.length === 0 ? 'Click "New Task" to create your first task.' : 'Try different filters.'}
+                  {filterStatus === 'done' ? 'Tasks you mark as done will appear here.' : tasks.length === 0 ? 'Click "New Task" to create your first task.' : 'Try different filters.'}
                 </p>
               </div>
             </div>
@@ -701,12 +865,48 @@ export default function Tasks() {
                 <TaskCard
                   key={task.id}
                   task={task}
+                  compact={filterStatus === 'done'}
                   onToggleDone={handleToggleDone}
                   onToggleSubtask={handleToggleSubtask}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
               ))}
+            </div>
+          )}
+
+          {/* Completed section on main view */}
+          {filterStatus !== 'done' && completedTasks.length > 0 && (
+            <div className="max-w-3xl mx-auto mt-8">
+              <button
+                onClick={() => setShowCompleted(prev => !prev)}
+                className="flex items-center gap-2 text-[13px] font-bold cursor-pointer mb-3"
+                style={{ color: 'var(--color-text-tertiary)' }}
+              >
+                {showCompleted ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                <Archive size={14} />
+                Completed ({completedTasks.length})
+              </button>
+              {showCompleted && (
+                <div className="space-y-3 opacity-60">
+                  {completedTasks.slice(0, 10).map(task => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      compact
+                      onToggleDone={handleToggleDone}
+                      onToggleSubtask={handleToggleSubtask}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                  {completedTasks.length > 10 && (
+                    <p className="text-center text-[12px] font-bold py-2" style={{ color: 'var(--color-text-tertiary)' }}>
+                      + {completedTasks.length - 10} more — use "Completed" filter to see all
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
