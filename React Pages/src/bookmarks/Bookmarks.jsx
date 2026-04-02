@@ -65,7 +65,7 @@ function useTheme() {
 }
 
 // ─── Custom Select ──────────────────────────────────────────────────────────
-function CustomSelect({ value, onChange, options, className = '', renderOption }) {
+function CustomSelect({ value, onChange, options, className = '', renderOption, compact = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const selectedOption = options.find(o => o.value === value) || options[0];
   const ref = useRef(null);
@@ -76,15 +76,18 @@ function CustomSelect({ value, onChange, options, className = '', renderOption }
     return () => document.removeEventListener('mousedown', h);
   }, [isOpen]);
 
+  const py = compact ? 'py-2' : 'py-2.5';
+  const rounded = compact ? 'rounded-lg' : 'rounded-xl';
+
   return (
     <div className={`relative ${className}`} ref={ref}>
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between w-full px-4 py-2.5 border rounded-xl font-bold text-[13px] select-none cursor-pointer ${isOpen ? 'ring-2 ring-primary-400/30' : ''}`}
+        className={`flex items-center justify-between w-full px-4 ${py} border ${rounded} font-bold text-[13px] select-none cursor-pointer transition-all duration-200 ${isOpen ? 'ring-2 ring-primary-400/30' : ''}`}
         style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: isOpen ? 'var(--color-primary-400)' : 'var(--color-border)', color: 'var(--color-text-primary)' }}
       >
-        <span className="truncate">{renderOption ? renderOption(selectedOption) : selectedOption?.label}</span>
-        <ChevronDown size={14} className={`transition-transform shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--color-text-tertiary)' }} />
+        <span className="truncate text-left">{renderOption ? renderOption(selectedOption) : selectedOption?.label}</span>
+        <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--color-text-tertiary)' }} />
       </div>
       {isOpen && (
         <div className="absolute z-20 w-full mt-1.5 py-1 rounded-xl border shadow-lg overflow-y-auto max-h-52" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
@@ -449,8 +452,8 @@ export default function Bookmarks() {
             <a href="tasks.html" title="Tasks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
               <ListTodo size={15} />
             </a>
-            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-              <HelpCircle size={15} />
+            <a href="bookmarks.html" title="Bookmarks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border bg-primary-50 text-primary-600 transition-colors cursor-pointer" style={{ borderColor: 'var(--color-primary-200)' }}>
+              <Bookmark size={15} />
             </a>
           </div>
         </div>
@@ -512,6 +515,7 @@ export default function Bookmarks() {
             <CustomSelect
               value={sortBy}
               onChange={setSortBy}
+              compact={true}
               options={[
                 { value: 'newest', label: 'Newest first' },
                 { value: 'oldest', label: 'Oldest first' },
@@ -541,12 +545,15 @@ export default function Bookmarks() {
         {/* Import / Export at bottom */}
         <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
           <div className="flex gap-2">
-            <button onClick={() => importRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
-              <Download size={13} /> Import
+            <button onClick={() => importRef.current?.click()} title="Import" className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
+              <Download size={13} />
             </button>
-            <button onClick={handleExport} disabled={bookmarks.length === 0} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed">
-              <Upload size={13} /> Export
+            <button onClick={handleExport} disabled={bookmarks.length === 0} title="Export" className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed">
+              <Upload size={13} />
             </button>
+            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-2 px-2 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <HelpCircle size={15} />
+            </a>
           </div>
         </div>
       </aside>

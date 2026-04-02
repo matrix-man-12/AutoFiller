@@ -541,11 +541,11 @@ export default function Help() {
             <a href="options.html" title="AutoFiller" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
               <Zap size={15} />
             </a>
-            <a href="bookmarks.html" title="Bookmarks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-              <Bookmark size={15} />
-            </a>
             <a href="tasks.html" title="Tasks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
               <ListTodo size={15} />
+            </a>
+            <a href="bookmarks.html" title="Bookmarks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <Bookmark size={15} />
             </a>
           </div>
         </div>
@@ -579,12 +579,15 @@ export default function Help() {
         {/* Navigate */}
         <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
           <div className="flex gap-2">
-            <button onClick={() => importRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
-              <Download size={13} /> Import All
+            <button onClick={() => importRef.current?.click()} title="Import All" className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
+              <Download size={13} />
             </button>
-            <button onClick={handleExportAll} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
-              <Upload size={13} /> Export All
+            <button onClick={handleExportAll} title="Export All" className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
+              <Upload size={13} />
             </button>
+            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-2 px-2 rounded-lg border bg-primary-50 text-primary-600 transition-colors cursor-pointer" style={{ borderColor: 'var(--color-primary-200)' }}>
+              <HelpCircle size={15} />
+            </a>
           </div>
         </div>
       </aside>

@@ -4,7 +4,7 @@ import {
   CheckCircle2, AlertTriangle, Circle, Clock, AlertOctagon,
   ChevronDown, ChevronRight, ChevronLeft, Upload, Download,
   Edit3, Flag, StickyNote, CalendarDays, Zap, Bookmark, HelpCircle,
-  Settings2, Archive
+  Settings2, Archive, Search
 } from 'lucide-react';
 
 const generateId = (prefix) => `${prefix}_${Math.random().toString(36).substr(2, 9)}`;
@@ -87,7 +87,7 @@ function useTheme() {
 }
 
 // ─── Custom Select ──────────────────────────────────────────────────────────
-function CustomSelect({ value, onChange, options, className = '', renderOption }) {
+function CustomSelect({ value, onChange, options, className = '', renderOption, compact = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const selectedOption = options.find(o => o.value === value) || options[0];
   const ref = useRef(null);
@@ -98,14 +98,17 @@ function CustomSelect({ value, onChange, options, className = '', renderOption }
     return () => document.removeEventListener('mousedown', h);
   }, [isOpen]);
 
+  const py = compact ? 'py-2' : 'py-2.5';
+  const rounded = compact ? 'rounded-lg' : 'rounded-xl';
+
   return (
     <div className={`relative ${className}`} ref={ref}>
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between w-full px-4 py-2.5 border rounded-xl font-bold text-[13px] select-none cursor-pointer transition-all duration-200 ${isOpen ? 'ring-2 ring-primary-400/30' : ''}`}
+        className={`flex items-center justify-between w-full px-4 ${py} border ${rounded} font-bold text-[13px] select-none cursor-pointer transition-all duration-200 ${isOpen ? 'ring-2 ring-primary-400/30' : ''}`}
         style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: isOpen ? 'var(--color-primary-400)' : 'var(--color-border)', color: 'var(--color-text-primary)' }}
       >
-        <span className="truncate">{renderOption ? renderOption(selectedOption) : selectedOption?.label}</span>
+        <span className="truncate text-left">{renderOption ? renderOption(selectedOption) : selectedOption?.label}</span>
         <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--color-text-tertiary)' }} />
       </div>
       {isOpen && (
@@ -345,6 +348,7 @@ function TaskModal({ task, onSave, onClose }) {
                 value={priority}
                 onChange={setPriority}
                 options={PRIORITIES}
+                compact={true}
                 renderOption={(opt) => (
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: opt.color }} />
@@ -359,6 +363,7 @@ function TaskModal({ task, onSave, onClose }) {
                 value={status}
                 onChange={setStatus}
                 options={STATUSES}
+                compact={true}
                 renderOption={(opt) => {
                   const Icon = opt.icon;
                   return (
@@ -521,6 +526,7 @@ export default function Tasks() {
   const [sortBy, setSortBy] = useState('priority');
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const importRef = useRef(null);
 
   const { theme, toggle: toggleTheme } = useTheme();
@@ -558,16 +564,40 @@ export default function Tasks() {
     blocked: tasks.filter(t => t.status === 'blocked').length,
   };
 
-  // Filter + Sort (only on active tasks when not filtering by done)
-  const baseList = filterStatus === 'done' ? completedTasks : activeTasks;
-  const filtered = baseList.filter(t => {
-    if (filterStatus !== 'all' && filterStatus !== 'done' && t.status !== filterStatus) return false;
+  // Filter + Sort
+  const isSearching = searchQuery.trim().length > 0;
+  
+  const filtered = tasks.filter(t => {
+    // 1. Status Filter: Only restrict if NOT searching
+    if (!isSearching) {
+      if (filterStatus === 'done') {
+        if (t.status !== 'done') return false;
+      } else if (filterStatus !== 'all') {
+        if (t.status !== filterStatus) return false;
+      } else {
+        // 'all' means all active (exclude done)
+        if (t.status === 'done') return false;
+      }
+    }
+    // If searching, we show all statuses.
+
+    // 2. Priority Filter
     if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
+    
+    // 3. Search Logic
+    if (isSearching) {
+      const q = searchQuery.toLowerCase();
+      const inTitle = t.title.toLowerCase().includes(q);
+      const inDesc = (t.description || '').toLowerCase().includes(q);
+      const inSubtasks = (t.subtasks || []).some(s => s.title.toLowerCase().includes(q));
+      if (!inTitle && !inDesc && !inSubtasks) return false;
+    }
+    
     return true;
   });
 
-  const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
   const sorted = [...filtered].sort((a, b) => {
+    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     if (sortBy === 'priority') return (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9);
     if (sortBy === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
     if (sortBy === 'dueDate') {
@@ -582,6 +612,22 @@ export default function Tasks() {
     }
     return 0;
   });
+
+  // Grouping for "Umbrellas"
+  const statusDisplayOrder = [
+    { value: 'todo', label: 'To Do', color: 'var(--color-primary-500)' },
+    { value: 'in_progress', label: 'In Progress', color: '#F59E0B' },
+    { value: 'blocked', label: 'Blocked', color: '#EF4444' },
+    { value: 'done', label: 'Completed', color: '#10B981' }
+  ];
+
+  const groupedTasks = statusDisplayOrder.reduce((acc, statusObj) => {
+    const tasksInStatus = sorted.filter(t => t.status === statusObj.value);
+    if (tasksInStatus.length > 0) {
+      acc.push({ ...statusObj, tasks: tasksInStatus });
+    }
+    return acc;
+  }, []);
 
   // Handlers
   const handleSave = (task) => {
@@ -749,11 +795,11 @@ export default function Tasks() {
             <a href="options.html" title="AutoFiller" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
               <Zap size={15} />
             </a>
+            <a href="tasks.html" title="Tasks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border bg-primary-50 text-primary-600 transition-colors cursor-pointer" style={{ borderColor: 'var(--color-primary-200)' }}>
+              <ListTodo size={15} />
+            </a>
             <a href="bookmarks.html" title="Bookmarks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
               <Bookmark size={15} />
-            </a>
-            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-              <HelpCircle size={15} />
             </a>
           </div>
         </div>
@@ -845,12 +891,15 @@ export default function Tasks() {
         {/* Import / Export at bottom */}
         <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-subtle)' }}>
           <div className="flex gap-2">
-            <button onClick={() => importRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
-              <Download size={13} /> Import
+            <button onClick={() => importRef.current?.click()} title="Import" className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600">
+              <Download size={13} />
             </button>
-            <button onClick={handleExport} disabled={tasks.length === 0} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed">
-              <Upload size={13} /> Export
+            <button onClick={handleExport} disabled={sorted.length === 0} title="Export" className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed">
+              <Upload size={13} />
             </button>
+            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-2 px-2 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <HelpCircle size={15} />
+            </a>
           </div>
         </div>
       </aside>
@@ -859,23 +908,45 @@ export default function Tasks() {
       <main className="flex-1 flex flex-col h-full overflow-hidden relative z-[1]">
         {/* Top Bar */}
         <header className="h-16 border-b px-8 flex items-center justify-between shrink-0" style={{ backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-border)' }}>
-          <h2 className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="text-lg font-extrabold tracking-tight shrink-0" style={{ color: 'var(--color-text-primary)' }}>
             {filterStatus === 'all' ? 'Active Tasks' : filterStatus === 'done' ? 'Completed' : getStatus(filterStatus).label}
             <span className="text-[13px] font-bold ml-2" style={{ color: 'var(--color-text-tertiary)' }}>({sorted.length})</span>
           </h2>
-          <div className="flex items-center gap-3">
-            <span className="text-[12px] font-bold" style={{ color: 'var(--color-text-tertiary)' }}>Sort by</span>
-            <CustomSelect
-              value={sortBy}
-              onChange={setSortBy}
-              options={[
-                { value: 'priority', label: 'Priority' },
-                { value: 'newest', label: 'Newest' },
-                { value: 'dueDate', label: 'Due Date' },
-                { value: 'status', label: 'Status' },
-              ]}
-              className="w-36"
-            />
+          
+          <div className="flex items-center gap-4 ml-auto">
+            {/* Search Bar - Positioned on right */}
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={14} style={{ color: 'var(--color-text-tertiary)' }} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tasks..."
+                className="w-full pl-9 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 font-semibold text-[13px] transition-all"
+                style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
+                  <X size={12} style={{ color: 'var(--color-text-tertiary)' }} />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-[12px] font-bold shrink-0" style={{ color: 'var(--color-text-tertiary)' }}>Sort by</span>
+              <CustomSelect
+                value={sortBy}
+                onChange={setSortBy}
+                compact={true}
+                options={[
+                  { value: 'priority', label: 'Priority' },
+                  { value: 'newest', label: 'Newest' },
+                  { value: 'dueDate', label: 'Due Date' },
+                  { value: 'status', label: 'Status' },
+                ]}
+                className="w-36"
+              />
+            </div>
           </div>
         </header>
 
@@ -894,23 +965,49 @@ export default function Tasks() {
               </div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto space-y-4">
-              {sorted.map(task => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  compact={filterStatus === 'done'}
-                  onToggleDone={handleToggleDone}
-                  onToggleSubtask={handleToggleSubtask}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
+            <div className="max-w-3xl mx-auto space-y-8 pb-10">
+              {groupedTasks.length > 0 ? (
+                groupedTasks.map(group => (
+                  <div key={group.value} className="space-y-4">
+                    <div className="flex items-center gap-2 group/header cursor-default px-1">
+                      <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: group.color }} />
+                      <h3 className="text-[12px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: 'var(--color-text-tertiary)' }}>
+                        {group.label}
+                        <span className="w-1 h-1 rounded-full bg-current opacity-20" />
+                        <span className="opacity-70">{group.tasks.length}</span>
+                      </h3>
+                    </div>
+                    <div className="space-y-3">
+                      {group.tasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          compact={group.value === 'done'}
+                          onToggleDone={handleToggleDone}
+                          onToggleSubtask={handleToggleSubtask}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-20 px-6 border-2 border-dashed rounded-3xl" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface-card)' }}>
+                  <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-6 text-primary-500 shadow-sm">
+                    <Search size={32} />
+                  </div>
+                  <h3 className="text-xl font-black mb-3" style={{ color: 'var(--color-text-primary)' }}>No matching tasks</h3>
+                  <p className="text-[14px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                    Try searching with different keywords or check your filters.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
           {/* Completed section on main view */}
-          {filterStatus !== 'done' && completedTasks.length > 0 && (
+          {filterStatus !== 'done' && !isSearching && completedTasks.length > 0 && (
             <div className="max-w-3xl mx-auto mt-8">
               <button
                 onClick={() => setShowCompleted(prev => !prev)}

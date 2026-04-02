@@ -364,7 +364,7 @@ function ExportModal({ apps, onClose }) {
 }
 
 // ─── Custom UI Select ───────────────────────────────────────────────────────
-const CustomSelect = ({ value, onChange, options, className = '' }) => {
+const CustomSelect = ({ value, onChange, options, className = '', compact = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectedOption = options.find(o => o.value === value) || options[0];
   const selectRef = useRef(null);
@@ -379,11 +379,14 @@ const CustomSelect = ({ value, onChange, options, className = '' }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
+  const triggerPadding = compact ? 'px-3 py-2 rounded-lg text-sm' : 'px-4 py-3 rounded-xl text-[13px]';
+  const dropdownItemPadding = compact ? 'px-3 py-2 text-sm' : 'px-4 py-2.5 text-[13px]';
+
   return (
     <div className={`relative ${className}`} ref={selectRef}>
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between w-full px-4 py-3 border rounded-xl font-bold text-[13px] select-none cursor-pointer transition-all duration-200 ${isOpen ? 'ring-2 ring-primary-400/30' : ''}`}
+        className={`flex items-center justify-between w-full border font-bold select-none cursor-pointer transition-all duration-200 ${triggerPadding} ${isOpen ? 'ring-2 ring-primary-400/30' : ''}`}
         style={{ 
           backgroundColor: 'var(--color-surface-raised)',
           borderColor: isOpen ? 'var(--color-primary-400)' : 'var(--color-border)',
@@ -391,7 +394,7 @@ const CustomSelect = ({ value, onChange, options, className = '' }) => {
         }}
       >
         <span className="truncate">{selectedOption?.label || 'Select...'}</span>
-        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--color-text-tertiary)' }} />
+        <ChevronDown size={compact ? 14 : 16} className={`transition-transform duration-200 shrink-0 ml-1.5 ${isOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--color-text-tertiary)' }} />
       </div>
       
       {isOpen && (
@@ -409,7 +412,7 @@ const CustomSelect = ({ value, onChange, options, className = '' }) => {
                 onChange(opt.value);
                 setIsOpen(false);
               }}
-              className={`px-4 py-2.5 text-[13px] font-bold cursor-pointer transition-colors ${opt.value === value ? '' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+              className={`${dropdownItemPadding} font-bold cursor-pointer transition-colors ${opt.value === value ? '' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
               style={{ 
                 backgroundColor: opt.value === value ? 'var(--color-primary-50, #FFF8ED)' : 'transparent',
                 color: opt.value === value ? 'var(--color-primary-700, #8B5526)' : 'var(--color-text-primary)'
@@ -797,6 +800,25 @@ export default function Options() {
     }
   };
 
+  const handleDuplicateApp = () => {
+    if (!currentApp) return;
+    const newApp = {
+      ...currentApp,
+      id: generateId('app'),
+      name: `(Copy) ${currentApp.name || 'Untitled'}`,
+      rules: currentApp.rules.map(rule => ({
+        ...rule,
+        id: generateId('rule'),
+        urlPatterns: (rule.urlPatterns || []).map(p => ({ ...p, id: generateId('url') })),
+        fields: (rule.fields || []).map(f => ({ ...f, id: generateId('field') }))
+      }))
+    };
+    const cloned = [...apps, newApp];
+    persistData(cloned);
+    setSelectedItemType('app');
+    setSelectedItemId(newApp.id);
+  };
+
   const handleMoveRule = (ruleId, newAppId) => {
     const cloned = [...apps];
     let sourceAppIndex = -1;
@@ -919,14 +941,14 @@ export default function Options() {
 
           {/* Quick Nav (3 horizontal icons) */}
           <div className="flex gap-1.5 mt-3">
-            <a href="bookmarks.html" title="Bookmarks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-              <Bookmark size={15} />
+            <a href="options.html" title="AutoFiller" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border bg-primary-50 text-primary-600 transition-colors cursor-pointer" style={{ borderColor: 'var(--color-primary-200)' }}>
+              <Zap size={15} />
             </a>
             <a href="tasks.html" title="Tasks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
               <ListTodo size={15} />
             </a>
-            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-              <HelpCircle size={15} />
+            <a href="bookmarks.html" title="Bookmarks" className="flex-1 flex items-center justify-center py-1.5 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <Bookmark size={15} />
             </a>
           </div>
         </div>
@@ -1044,17 +1066,22 @@ export default function Options() {
           <div className="flex gap-2">
             <button
               onClick={() => importInputRef.current?.click()}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600"
+              title="Import"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600"
             >
-              <Download size={13} /> Import
+              <Download size={13} />
             </button>
             <button
               onClick={() => setShowExportModal(true)}
               disabled={apps.length === 0}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Export"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-lg cursor-pointer border border-primary-200 bg-primary-50 text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Upload size={13} /> Export
+              <Upload size={13} />
             </button>
+            <a href="help.html" title="Help & Docs" className="flex-1 flex items-center justify-center py-2 px-2 rounded-lg border hover:bg-primary-50 transition-colors cursor-pointer" style={{ backgroundColor: 'var(--color-surface-raised)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              <HelpCircle size={15} />
+            </a>
           </div>
         </div>
       </aside>
@@ -1080,9 +1107,9 @@ export default function Options() {
             >
               <Save size={15} /> Saved
             </span>
-            {selectedItemType === 'rule' && selectedItemId && (
+            {selectedItemId && (
               <button 
-                onClick={handleDuplicateRule}
+                onClick={selectedItemType === 'app' ? handleDuplicateApp : handleDuplicateRule}
                 className="flex items-center gap-2 border text-gray-700 hover:bg-gray-50 px-3.5 py-2 rounded-lg font-bold cursor-pointer text-sm"
                 style={{ 
                   backgroundColor: 'var(--color-surface-card)', 
@@ -1218,6 +1245,7 @@ export default function Options() {
                       onChange={(val) => handleMoveRule(currentRule.id, val)}
                       options={apps.map(app => ({ value: app.id, label: app.name || 'Unnamed Application' }))}
                       className="w-full md:w-1/2"
+                      compact={true}
                     />
                   </div>
 
@@ -1233,6 +1261,7 @@ export default function Options() {
                         { value: 'wildcard', label: 'Wildcard (*)' }
                       ]}
                       className="w-full"
+                      compact={true}
                     />
                   </div>
                   <div className="flex-1 space-y-3">
@@ -1367,6 +1396,7 @@ export default function Options() {
                                 { value: 'dropdown', label: '📋 Dropdown' }
                               ]}
                               className="w-full"
+                              compact={true}
                             />
                           </div>
 
@@ -1475,6 +1505,7 @@ export default function Options() {
                                   { value: 'keyup', label: 'Key Up' }
                                 ]}
                                 className="w-full"
+                                compact={true}
                               />
                             </div>
                             {/* Spacer hint */}
@@ -1505,6 +1536,7 @@ export default function Options() {
                                     { value: 'keyup', label: 'Key Up' }
                                   ]}
                                   className="w-full"
+                                  compact={true}
                                 />
                               </div>
 
