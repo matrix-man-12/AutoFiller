@@ -27,8 +27,26 @@ import {
   Bookmark,
   ListTodo,
   HelpCircle,
-  Zap
+  Zap,
+  MousePointer2,
+  Clock,
+  Type,
+  ListFilter
 } from 'lucide-react';
+
+// ─── Field Migration Helper ─────────────────────────────────────────────────
+const migrateField = (field) => ({
+  elementType: 'input',
+  waitBefore: 0,
+  interactionType: 'click',
+  dropdownAction: 'click',
+  waitAfterOpen: 0,
+  optionValue: '',
+  content: '',
+  appendTimestamp: false,
+  enabled: true,
+  ...field,
+});
 
 const generateId = (prefix) => `${prefix}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -476,7 +494,8 @@ export default function Options() {
             ...app,
             rules: app.rules.map(rule => ({
               ...rule,
-              urlPatterns: rule.urlPatterns || (rule.urlPattern ? [{id: generateId('url'), value: rule.urlPattern}] : [{id: generateId('url'), value: ''}])
+              urlPatterns: rule.urlPatterns || (rule.urlPattern ? [{id: generateId('url'), value: rule.urlPattern}] : [{id: generateId('url'), value: ''}]),
+              fields: (rule.fields || []).map(migrateField)
             }))
           }));
           setApps(migratedApps);
@@ -555,8 +574,8 @@ export default function Options() {
                 if (!existingRuleIdsInApp.has(rule.id)) {
                   // Rule is new to this app — also ensure no global ID collision
                   const safeRule = allExistingRuleIds.has(rule.id)
-                    ? { ...rule, id: generateId('rule') }
-                    : rule;
+                    ? { ...rule, id: generateId('rule'), fields: (rule.fields || []).map(migrateField) }
+                    : { ...rule, fields: (rule.fields || []).map(migrateField) };
                   existingApp.rules.push(safeRule);
                   allExistingRuleIds.add(safeRule.id);
                   addedRules++;
@@ -566,13 +585,14 @@ export default function Options() {
             } else {
               // Brand-new app → append it, de-collide any rule ids
               const sanitizedRules = (importedApp.rules ?? []).map(rule => {
+                const migratedRule = { ...rule, fields: (rule.fields || []).map(migrateField) };
                 if (allExistingRuleIds.has(rule.id)) {
                   const newId = generateId('rule');
                   allExistingRuleIds.add(newId);
-                  return { ...rule, id: newId };
+                  return { ...migratedRule, id: newId };
                 }
                 allExistingRuleIds.add(rule.id);
-                return rule;
+                return migratedRule;
               });
               result.push({ ...importedApp, rules: sanitizedRules });
               addedApps++;
@@ -708,13 +728,10 @@ export default function Options() {
     for (let a of cloned) {
       const r = a.rules.find(rx => rx.id === ruleId);
       if (r) {
-        r.fields.push({
+        r.fields.push(migrateField({
           id: generateId('field'),
           selector: '',
-          content: '',
-          appendTimestamp: false,
-          enabled: true
-        });
+        }));
         persistData(cloned);
         return;
       }
@@ -1170,7 +1187,7 @@ export default function Options() {
 
           {/* ── RULE EDITOR ── */}
           {selectedItemType === 'rule' && currentRule && (
-            <div className="max-w-3xl mx-auto space-y-6">
+            <div className="max-w-5xl mx-auto space-y-6">
               {/* URL Matching Card */}
               <div 
                 className="p-7 rounded-2xl shadow-sm border"
@@ -1293,13 +1310,13 @@ export default function Options() {
                     >
                       <FileText size={32} className="mx-auto mb-3" style={{ color: 'var(--color-text-tertiary)' }} />
                       <h4 className="text-[15px] font-bold mb-1" style={{ color: 'var(--color-text-secondary)' }}>No fields added yet</h4>
-                      <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Add fields to auto-fill input elements on this page.</p>
+                      <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Add fields to auto-fill inputs, click buttons, or select dropdown options.</p>
                     </div>
                   ) : (
                     currentRule.fields.map((field) => (
                       <div 
                         key={field.id} 
-                        className={`group relative flex flex-col md:flex-row items-end gap-3 p-4 pt-5 mt-4 border rounded-xl shadow-sm transition-all duration-200 ${!field.enabled ? 'opacity-50 grayscale-[30%] bg-black/[0.02] dark:bg-white/[0.02]' : ''}`}
+                        className={`group relative flex flex-col gap-4 p-5 pt-6 mt-4 border rounded-xl shadow-sm transition-all duration-200 ${!field.enabled ? 'opacity-50 grayscale-[30%] bg-black/[0.02] dark:bg-white/[0.02]' : ''}`}
                         style={{ 
                           backgroundColor: field.enabled ? 'var(--color-surface-card)' : 'transparent',
                           borderColor: 'var(--color-border)'
@@ -1336,61 +1353,218 @@ export default function Options() {
                           </button>
                         </div>
 
-                        {/* Selector */}
-                        <div className="flex-1 w-full relative">
-                          <label className={`block text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>Selector</label>
-                          <input 
-                            type="text" 
-                            value={field.selector} 
-                            disabled={!field.enabled}
-                            onChange={(e) => updateMappingField(currentRule.id, field.id, 'selector', e.target.value)} 
-                            placeholder="#username or //div/input" 
-                            className={`w-full px-3 py-2 border rounded-lg font-semibold text-sm font-mono-code shadow-inner transition-colors ${field.enabled ? 'focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none' : 'cursor-not-allowed'}`}
-                            style={{ 
-                              backgroundColor: 'var(--color-surface-raised)',
-                              borderColor: 'var(--color-border)',
-                              color: 'var(--color-text-primary)'
-                            }}
-                          />
-                        </div>
-
-                        {/* Fill Value */}
-                        <div className="flex-1 w-full relative">
-                          <label className={`block text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>Fill Value</label>
-                          <input 
-                            type="text" 
-                            value={field.content} 
-                            disabled={!field.enabled}
-                            onChange={(e) => updateMappingField(currentRule.id, field.id, 'content', e.target.value)} 
-                            placeholder="Value to fill..." 
-                            className={`w-full px-3 py-2 border rounded-lg font-semibold text-sm font-mono-code shadow-inner transition-colors ${field.enabled ? 'focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none' : 'cursor-not-allowed'}`}
-                            style={{ 
-                              backgroundColor: 'var(--color-surface-raised)',
-                              borderColor: 'var(--color-border)',
-                              color: 'var(--color-text-primary)'
-                            }}
-                          />
-                        </div>
-
-                        {/* Timestamp checkbox */}
-                        <div className={`flex items-center justify-center shrink-0 w-max h-[38px] ${!field.enabled ? 'pointer-events-none' : ''}`}>
-                          <label 
-                            className={`flex items-center justify-center gap-1.5 px-3 h-full rounded-lg border shadow-sm transition-colors ${field.enabled ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5' : ''}`}
-                            style={{ 
-                              backgroundColor: 'var(--color-surface-raised)',
-                              borderColor: 'var(--color-border)'
-                            }}
-                          >
-                            <input 
-                              type="checkbox" 
-                              disabled={!field.enabled}
-                              checked={field.appendTimestamp} 
-                              onChange={(e) => updateMappingField(currentRule.id, field.id, 'appendTimestamp', e.target.checked)} 
-                              className={`w-3.5 h-3.5 rounded accent-primary-500 ${field.enabled ? 'cursor-pointer' : ''}`}
+                        {/* Row 1: Element Type + Wait Before + Selector */}
+                        <div className="flex flex-col md:flex-row items-end gap-3">
+                          {/* Element Type */}
+                          <div className="w-full md:w-44 shrink-0">
+                            <label className={`block text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>Element Type</label>
+                            <CustomSelect
+                              value={field.elementType || 'input'}
+                              onChange={(val) => updateMappingField(currentRule.id, field.id, 'elementType', val)}
+                              options={[
+                                { value: 'input', label: '📝 Input / Textarea' },
+                                { value: 'button', label: '🔘 Button / Link' },
+                                { value: 'dropdown', label: '📋 Dropdown' }
+                              ]}
+                              className="w-full"
                             />
-                            <span className="text-[12px] font-bold" style={{ color: 'var(--color-text-primary)' }}>Timestamp</span>
-                          </label>
+                          </div>
+
+                          {/* Wait Before */}
+                          <div className="w-full md:w-32 shrink-0">
+                            <label className={`flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>
+                              <Clock size={10} /> Wait Before
+                            </label>
+                            <div className="relative">
+                              <input 
+                                type="number" 
+                                min="0"
+                                step="100"
+                                value={field.waitBefore || 0} 
+                                disabled={!field.enabled}
+                                onChange={(e) => updateMappingField(currentRule.id, field.id, 'waitBefore', parseInt(e.target.value) || 0)} 
+                                className={`w-full px-3 py-2 pr-8 border rounded-lg font-semibold text-sm font-mono-code shadow-inner transition-colors ${field.enabled ? 'focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none' : 'cursor-not-allowed'}`}
+                                style={{ 
+                                  backgroundColor: 'var(--color-surface-raised)',
+                                  borderColor: 'var(--color-border)',
+                                  color: 'var(--color-text-primary)'
+                                }}
+                              />
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold pointer-events-none" style={{ color: 'var(--color-text-tertiary)' }}>ms</span>
+                            </div>
+                          </div>
+
+                          {/* Selector */}
+                          <div className="flex-1 w-full">
+                            <label className={`block text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>Selector</label>
+                            <input 
+                              type="text" 
+                              value={field.selector} 
+                              disabled={!field.enabled}
+                              onChange={(e) => updateMappingField(currentRule.id, field.id, 'selector', e.target.value)} 
+                              placeholder="#username or //div/input" 
+                              className={`w-full px-3 py-2 border rounded-lg font-semibold text-sm font-mono-code shadow-inner transition-colors ${field.enabled ? 'focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none' : 'cursor-not-allowed'}`}
+                              style={{ 
+                                backgroundColor: 'var(--color-surface-raised)',
+                                borderColor: 'var(--color-border)',
+                                color: 'var(--color-text-primary)'
+                              }}
+                            />
+                          </div>
                         </div>
+
+                        {/* Row 2: Conditional fields based on Element Type */}
+                        {(field.elementType || 'input') === 'input' && (
+                          <div className="flex flex-col md:flex-row items-end gap-3">
+                            {/* Fill Value */}
+                            <div className="flex-1 w-full">
+                              <label className={`block text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>Fill Value</label>
+                              <input 
+                                type="text" 
+                                value={field.content || ''} 
+                                disabled={!field.enabled}
+                                onChange={(e) => updateMappingField(currentRule.id, field.id, 'content', e.target.value)} 
+                                placeholder="Value to fill..." 
+                                className={`w-full px-3 py-2 border rounded-lg font-semibold text-sm font-mono-code shadow-inner transition-colors ${field.enabled ? 'focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none' : 'cursor-not-allowed'}`}
+                                style={{ 
+                                  backgroundColor: 'var(--color-surface-raised)',
+                                  borderColor: 'var(--color-border)',
+                                  color: 'var(--color-text-primary)'
+                                }}
+                              />
+                            </div>
+
+                            {/* Timestamp checkbox */}
+                            <div className={`flex items-center justify-center shrink-0 w-max h-[38px] ${!field.enabled ? 'pointer-events-none' : ''}`}>
+                              <label 
+                                className={`flex items-center justify-center gap-1.5 px-3 h-full rounded-lg border shadow-sm transition-colors ${field.enabled ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5' : ''}`}
+                                style={{ 
+                                  backgroundColor: 'var(--color-surface-raised)',
+                                  borderColor: 'var(--color-border)'
+                                }}
+                              >
+                                <input 
+                                  type="checkbox" 
+                                  disabled={!field.enabled}
+                                  checked={field.appendTimestamp || false} 
+                                  onChange={(e) => updateMappingField(currentRule.id, field.id, 'appendTimestamp', e.target.checked)} 
+                                  className={`w-3.5 h-3.5 rounded accent-primary-500 ${field.enabled ? 'cursor-pointer' : ''}`}
+                                />
+                                <span className="text-[12px] font-bold" style={{ color: 'var(--color-text-primary)' }}>Timestamp</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+
+                        {(field.elementType) === 'button' && (
+                          <div className="flex flex-col md:flex-row items-end gap-3">
+                            {/* Interaction Type */}
+                            <div className="w-full md:w-52 shrink-0">
+                              <label className={`flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>
+                                <MousePointer2 size={10} /> Interaction
+                              </label>
+                              <CustomSelect
+                                value={field.interactionType || 'click'}
+                                onChange={(val) => updateMappingField(currentRule.id, field.id, 'interactionType', val)}
+                                options={[
+                                  { value: 'click', label: 'Click' },
+                                  { value: 'focus', label: 'Focus' },
+                                  { value: 'mousedown', label: 'Mouse Down' },
+                                  { value: 'mouseup', label: 'Mouse Up' },
+                                  { value: 'keydown', label: 'Key Down' },
+                                  { value: 'keyup', label: 'Key Up' }
+                                ]}
+                                className="w-full"
+                              />
+                            </div>
+                            {/* Spacer hint */}
+                            <div className="flex-1 flex items-center px-3 py-2 rounded-lg border border-dashed" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)' }}>
+                              <MousePointer2 size={14} className="mr-2 shrink-0" />
+                              <span className="text-[12px] font-semibold">Dispatches the selected event on the target element when triggered.</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {(field.elementType) === 'dropdown' && (
+                          <div className="flex flex-col gap-3">
+                            <div className="flex flex-col md:flex-row items-end gap-3">
+                              {/* Open Action */}
+                              <div className="w-full md:w-52 shrink-0">
+                                <label className={`flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>
+                                  <MousePointer2 size={10} /> Open Action
+                                </label>
+                                <CustomSelect
+                                  value={field.dropdownAction || 'click'}
+                                  onChange={(val) => updateMappingField(currentRule.id, field.id, 'dropdownAction', val)}
+                                  options={[
+                                    { value: 'click', label: 'Click' },
+                                    { value: 'focus', label: 'Focus' },
+                                    { value: 'mousedown', label: 'Mouse Down' },
+                                    { value: 'mouseup', label: 'Mouse Up' },
+                                    { value: 'keydown', label: 'Key Down' },
+                                    { value: 'keyup', label: 'Key Up' }
+                                  ]}
+                                  className="w-full"
+                                />
+                              </div>
+
+                              {/* Wait After Open */}
+                              <div className="w-full md:w-36 shrink-0">
+                                <label className={`flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>
+                                  <Clock size={10} /> Wait After Open
+                                </label>
+                                <div className="relative">
+                                  <input 
+                                    type="number" 
+                                    min="0"
+                                    step="100"
+                                    value={field.waitAfterOpen || 0} 
+                                    disabled={!field.enabled}
+                                    onChange={(e) => updateMappingField(currentRule.id, field.id, 'waitAfterOpen', parseInt(e.target.value) || 0)} 
+                                    className={`w-full px-3 py-2 pr-8 border rounded-lg font-semibold text-sm font-mono-code shadow-inner transition-colors ${field.enabled ? 'focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none' : 'cursor-not-allowed'}`}
+                                    style={{ 
+                                      backgroundColor: 'var(--color-surface-raised)',
+                                      borderColor: 'var(--color-border)',
+                                      color: 'var(--color-text-primary)'
+                                    }}
+                                  />
+                                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold pointer-events-none" style={{ color: 'var(--color-text-tertiary)' }}>ms</span>
+                                </div>
+                              </div>
+
+                              {/* Option Value */}
+                              <div className="flex-1 w-full">
+                                <label className={`flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold mb-1 ${!field.enabled ? 'opacity-70' : ''}`} style={{ color: 'var(--color-text-tertiary)' }}>
+                                  <ListFilter size={10} /> Option Value
+                                </label>
+                                <input 
+                                  type="text" 
+                                  value={field.optionValue || ''} 
+                                  disabled={!field.enabled}
+                                  onChange={(e) => updateMappingField(currentRule.id, field.id, 'optionValue', e.target.value)} 
+                                  placeholder="Option value to select..." 
+                                  className={`w-full px-3 py-2 border rounded-lg font-semibold text-sm font-mono-code shadow-inner transition-colors ${field.enabled ? 'focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:outline-none' : 'cursor-not-allowed'}`}
+                                  style={{ 
+                                    backgroundColor: 'var(--color-surface-raised)',
+                                    borderColor: 'var(--color-border)',
+                                    color: 'var(--color-text-primary)'
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            {/* Flow hint */}
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed text-[11px] font-semibold" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-tertiary)' }}>
+                              <span>Flow:</span>
+                              <span className="px-1.5 py-0.5 rounded bg-primary-50 text-primary-700 font-bold">Wait Before</span>
+                              <span>→</span>
+                              <span className="px-1.5 py-0.5 rounded bg-primary-50 text-primary-700 font-bold">Open Action</span>
+                              <span>→</span>
+                              <span className="px-1.5 py-0.5 rounded bg-primary-50 text-primary-700 font-bold">Wait After Open</span>
+                              <span>→</span>
+                              <span className="px-1.5 py-0.5 rounded bg-primary-50 text-primary-700 font-bold">Select Option</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}

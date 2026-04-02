@@ -13,29 +13,48 @@ if (typeof window.hasAutoFillerListener === 'undefined') {
     }
   });
 
+  // --- Utility: sleep for ms ---
+  function sleep(ms) {
+    return ms > 0 ? new Promise(resolve => setTimeout(resolve, ms)) : Promise.resolve();
+  }
+
   async function executeAutoFill() {
     const data = await chrome.storage.local.get('apps');
     if (!data.apps) return;
 
     const currentUrl = window.location.href;
     
-    data.apps.forEach(app => {
-      if (!app.enabled) return;
+    for (const app of data.apps) {
+      if (!app.enabled) continue;
 
-      app.rules.forEach(rule => {
-        if (!rule.enabled) return;
+      for (const rule of app.rules) {
+        if (!rule.enabled) continue;
 
         const patterns = rule.urlPatterns ? rule.urlPatterns.map(p => p.value) : [rule.urlPattern];
         const isMatched = patterns.some(pattern => isMatch(currentUrl, pattern, rule.matchType));
 
         if (isMatched) {
-          rule.fields.forEach(field => {
-            if (!field.enabled) return;
+          // Process fields sequentially to respect wait times
+          for (const field of rule.fields) {
+            if (!field.enabled) continue;
 
             try {
+              // Wait before this field
+              await sleep(field.waitBefore || 0);
+
               const element = getElement(field.selector);
-              if (canFill(element)) {
-                let contentToFill = field.content;
+              if (!element) {
+                console.warn(`AutoFiller: Element not found -> ${field.selector}`);
+                continue;
+              }
+
+              const elementType = field.elementType || 'input';
+
+              if (elementType === 'input') {
+                // --- Input / Textarea: fill value ---
+                if (!canFillInput(element)) continue;
+
+                let contentToFill = field.content || '';
                 
                 if (field.appendTimestamp) {
                   const now = new Date();
@@ -50,14 +69,31 @@ if (typeof window.hasAutoFillerListener === 'undefined') {
                 }
                 
                 fillElement(element, contentToFill);
+
+              } else if (elementType === 'button') {
+                // --- Button / Link: dispatch interaction event ---
+                dispatchInteraction(element, field.interactionType || 'click');
+
+              } else if (elementType === 'dropdown') {
+                // --- Dropdown: open action -> wait -> select option ---
+                dispatchInteraction(element, field.dropdownAction || 'click');
+                await sleep(field.waitAfterOpen || 0);
+                
+                // Set the option value
+                if (field.optionValue !== undefined && field.optionValue !== '') {
+                  element.value = field.optionValue;
+                  element.dispatchEvent(new Event('input', { bubbles: true }));
+                  element.dispatchEvent(new Event('change', { bubbles: true }));
+                }
               }
+
             } catch (err) {
-              console.warn(`AutoFiller: Invalid selector or element not found -> ${field.selector}`, err);
+              console.warn(`AutoFiller: Error processing field -> ${field.selector}`, err);
             }
-          });
+          }
         }
-      });
-    });
+      }
+    }
   }
 
   async function executeAutoClear() {
@@ -66,31 +102,35 @@ if (typeof window.hasAutoFillerListener === 'undefined') {
 
     const currentUrl = window.location.href;
     
-    data.apps.forEach(app => {
-      if (!app.enabled) return;
+    for (const app of data.apps) {
+      if (!app.enabled) continue;
 
-      app.rules.forEach(rule => {
-        if (!rule.enabled) return;
+      for (const rule of app.rules) {
+        if (!rule.enabled) continue;
 
         const patterns = rule.urlPatterns ? rule.urlPatterns.map(p => p.value) : [rule.urlPattern];
         const isMatched = patterns.some(pattern => isMatch(currentUrl, pattern, rule.matchType));
 
         if (isMatched) {
-          rule.fields.forEach(field => {
-            if (!field.enabled) return;
+          for (const field of rule.fields) {
+            if (!field.enabled) continue;
+            
+            // Only clear input-type fields
+            const elementType = field.elementType || 'input';
+            if (elementType !== 'input') continue;
 
             try {
               const element = getElement(field.selector);
-              if (canFill(element)) {
+              if (canFillInput(element)) {
                 clearElement(element);
               }
             } catch (err) {
               console.warn(`AutoFiller: Invalid selector or element not found -> ${field.selector}`, err);
             }
-          });
+          }
         }
-      });
-    });
+      }
+    }
   }
 
   // --- Helper Methods ---
@@ -111,12 +151,43 @@ if (typeof window.hasAutoFillerListener === 'undefined') {
     return document.querySelector(s);
   }
 
-  function canFill(element) {
+  /**
+   * Checks if an element can receive text input (for input/textarea type fields only)
+   */
+  function canFillInput(element) {
     if (!element) return false;
-    // Expanded limits to safely include generic text environments 
     const isFormEl = ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName);
     const isContentEditable = element.isContentEditable;
     return isFormEl || isContentEditable;
+  }
+
+  /**
+   * Dispatches an interaction event on an element
+   */
+  function dispatchInteraction(element, interactionType) {
+    switch (interactionType) {
+      case 'click':
+        element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        break;
+      case 'focus':
+        element.focus();
+        element.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
+        break;
+      case 'mousedown':
+        element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+        break;
+      case 'mouseup':
+        element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+        break;
+      case 'keydown':
+        element.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true }));
+        break;
+      case 'keyup':
+        element.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: true }));
+        break;
+      default:
+        element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    }
   }
 
   function fillElement(element, content) {
